@@ -1,0 +1,384 @@
+@use '@/styles/variables.scss' as *;
+
+.pageContainer {
+  min-height: 100vh;
+  background-color: $color-bg-page;
+  padding-bottom: 120rpx;
+}
+
+.header {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  padding: 48rpx $page-padding 80rpx;
+  color: $color-text-white;
+  position: relative;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+}
+
+.avatar {
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: $radius-round;
+  border: 4rpx solid rgba(255, 255, 255, 0.5);
+  margin-right: $spacing-lg;
+}
+
+.userDetails {
+  flex: 1;
+  min-width: 0;
+}
+
+.userName {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  margin-bottom: $spacing-xs;
+}
+
+.userSignature {
+  font-size: $font-size-sm;
+  opacity: 0.9;
+  @include text-ellipsis;
+}
+
+.editBtn {
+  font-size: 24rpx;
+  padding: 8rpx 20rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.6);
+  border-radius: $radius-button;
+  color: $color-text-white;
+  margin-left: $spacing-md;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.statsRow {
+  display: flex;
+  justify-content: space-around;
+  margin-top: $spacing-xl;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: $radius-lg;
+  padding: $spacing-lg 0;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.statNum {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  margin-bottom: 4rpx;
+}
+
+.statLabel {
+  font-size: $font-size-xs;
+  opacity: 0.9;
+}
+
+.creditEntry {
+  margin: -40rpx $page-padding 0;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.creditLeft {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.creditIcon {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: $radius-md;
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  margin-right: $spacing-md;
+}
+
+.creditInfo {
+  flex: 1;
+}
+
+.creditTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+}
+
+.creditDesc {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.creditScore {
+  font-size: $font-size-xl;
+  font-weight: $font-bold;
+  color: $color-primary;
+}
+
+.creditArrow {
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+  margin-left: $spacing-sm;
+}
+
+.menuSection {
+  background: $color-bg-card;
+  margin: $spacing-md $page-padding 0;
+  border-radius: $radius-lg;
+  overflow: hidden;
+}
+
+.sectionTitle {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  padding: $spacing-lg $spacing-lg $spacing-sm;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  padding: $spacing-md $spacing-lg;
+  transition: all $transition-fast;
+  border-bottom: 1rpx solid $color-divider;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:active {
+    background: $color-bg-hover;
+  }
+}
+
+.menuIcon {
+  width: 48rpx;
+  font-size: 32rpx;
+  margin-right: $spacing-md;
+  text-align: center;
+}
+
+.menuText {
+  flex: 1;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+}
+
+.menuBadge {
+  background: $color-error;
+  color: $color-text-white;
+  font-size: $font-size-xs;
+  padding: 4rpx 12rpx;
+  border-radius: $radius-round;
+  margin-right: $spacing-sm;
+}
+
+.menuArrow {
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+}
+
+.settingsSection {
+  background: $color-bg-card;
+  margin: $spacing-md $page-padding;
+  border-radius: $radius-lg;
+  overflow: hidden;
+}
+
+.settingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md $spacing-lg;
+  border-bottom: 1rpx solid $color-divider;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:active {
+    background: $color-bg-hover;
+  }
+}
+
+.settingLeft {
+  display: flex;
+  align-items: center;
+}
+
+.settingIcon {
+  width: 48rpx;
+  font-size: 32rpx;
+  margin-right: $spacing-md;
+  text-align: center;
+}
+
+.settingText {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+}
+
+.switch {
+  width: 88rpx;
+  height: 48rpx;
+  border-radius: 24rpx;
+  background: $color-border;
+  position: relative;
+  transition: all $transition-base;
+}
+
+.switchActive {
+  background: $color-primary;
+}
+
+.switchDot {
+  position: absolute;
+  top: 4rpx;
+  left: 4rpx;
+  width: 40rpx;
+  height: 40rpx;
+  background: $color-bg-card;
+  border-radius: $radius-round;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.15);
+  transition: all $transition-base;
+}
+
+.switchActive .switchDot {
+  left: 44rpx;
+}
+
+.equipmentSection {
+  background: $color-bg-card;
+  margin: $spacing-md $page-padding 0;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+}
+
+.equipmentHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+}
+
+.equipmentTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.equipmentEdit {
+  font-size: $font-size-sm;
+  color: $color-primary;
+}
+
+.equipmentTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.equipmentTag {
+  padding: 10rpx 20rpx;
+  background: $color-bg-page;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.venuesSection {
+  background: $color-bg-card;
+  margin: $spacing-md $page-padding 0;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+}
+
+.venuesHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+}
+
+.venuesTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.venuesMore {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.venueItem {
+  display: flex;
+  align-items: center;
+  padding: $spacing-sm 0;
+  border-bottom: 1rpx solid $color-divider;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.venueIcon {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: $radius-sm;
+  background: rgba(0, 180, 216, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  margin-right: $spacing-md;
+}
+
+.venueInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.venueName {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+  @include text-ellipsis;
+}
+
+.venueAddr {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  @include text-ellipsis;
+}
+
+.venueDistance {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  margin-left: $spacing-sm;
+}

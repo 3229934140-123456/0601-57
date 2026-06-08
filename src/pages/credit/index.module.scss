@@ -1,0 +1,287 @@
+@use '@/styles/variables.scss' as *;
+
+.pageContainer {
+  min-height: 100vh;
+  background-color: $color-bg-page;
+}
+
+.header {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  padding: 48rpx $page-padding;
+  color: $color-text-white;
+  text-align: center;
+}
+
+.creditScore {
+  font-size: 80rpx;
+  font-weight: $font-weight-bold;
+  line-height: 1;
+  margin-bottom: $spacing-sm;
+}
+
+.creditLabel {
+  font-size: $font-size-sm;
+  opacity: 0.9;
+}
+
+.creditLevel {
+  display: inline-block;
+  margin-top: $spacing-md;
+  padding: 8rpx 24rpx;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  backdrop-filter: blur(10px);
+}
+
+.statsGrid {
+  display: flex;
+  margin: -32rpx $page-padding 0;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg 0;
+  box-shadow: $shadow-card;
+  position: relative;
+  z-index: 2;
+}
+
+.statItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-right: 1rpx solid $color-divider;
+
+  &:last-child {
+    border-right: none;
+  }
+}
+
+.statNum {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+  margin-bottom: 4rpx;
+}
+
+.statLabel {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.tabTabs {
+  display: flex;
+  background: $color-bg-card;
+  margin-top: $spacing-md;
+  padding: 0 $page-padding;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.tabItem {
+  flex: 1;
+  text-align: center;
+  padding: $spacing-md 0;
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  position: relative;
+  transition: all $transition-fast;
+
+  &:active {
+    opacity: 0.7;
+  }
+}
+
+.tabItemActive {
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.tabIndicator {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48rpx;
+  height: 6rpx;
+  background: $color-primary;
+  border-radius: 3rpx;
+}
+
+.reviewList {
+  padding: $spacing-md $page-padding;
+}
+
+.reviewItem {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.reviewHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.reviewerAvatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: $radius-round;
+  margin-right: $spacing-md;
+}
+
+.reviewerInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.reviewerName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+}
+
+.reviewActivity {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  @include text-ellipsis;
+}
+
+.reviewRating {
+  display: flex;
+  gap: 4rpx;
+}
+
+.star {
+  font-size: 24rpx;
+  color: $color-border;
+}
+
+.starActive {
+  color: #FFD700;
+}
+
+.reviewContent {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: 1.6;
+  margin-bottom: $spacing-sm;
+}
+
+.reviewTime {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.blacklistSection {
+  padding: $spacing-md $page-padding;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 0;
+}
+
+.emptyIcon {
+  font-size: 80rpx;
+  margin-bottom: $spacing-md;
+  opacity: 0.5;
+}
+
+.emptyText {
+  font-size: $font-size-md;
+  color: $color-text-tertiary;
+}
+
+.blacklistItem {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  display: flex;
+  align-items: center;
+  box-shadow: $shadow-card;
+}
+
+.blacklistAvatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-round;
+  margin-right: $spacing-md;
+  opacity: 0.8;
+}
+
+.blacklistInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.blacklistName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin-bottom: 8rpx;
+}
+
+.blacklistReason {
+  font-size: $font-size-xs;
+  color: $color-error;
+}
+
+.removeBtn {
+  @include button-reset;
+  padding: 0 $spacing-md;
+  height: 56rpx;
+  background: rgba(255, 63, 63, 0.1);
+  border-radius: $radius-button;
+  color: $color-error;
+  font-size: $font-size-xs;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.creditInfo {
+  background: $color-bg-card;
+  margin: $spacing-md $page-padding;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+}
+
+.creditInfoTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.creditInfoItem {
+  display: flex;
+  align-items: flex-start;
+  padding: $spacing-sm 0;
+  border-bottom: 1rpx solid $color-divider;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.creditInfoIcon {
+  width: 32rpx;
+  margin-right: $spacing-sm;
+  font-size: 24rpx;
+}
+
+.creditInfoText {
+  flex: 1;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: 1.5;
+}

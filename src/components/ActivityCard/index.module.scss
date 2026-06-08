@@ -1,0 +1,179 @@
+@use '@/styles/variables.scss' as *;
+
+.activityCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.98);
+    box-shadow: $shadow-card-hover;
+  }
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: $spacing-md;
+}
+
+.typeTag {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: $radius-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  margin-right: $spacing-md;
+  flex-shrink: 0;
+}
+
+.cardTitleBox {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  line-height: $line-height-tight;
+  margin-bottom: $spacing-xs;
+  @include text-ellipsis;
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.levelTag {
+  font-size: $font-size-xs;
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+  background: $color-bg-tag;
+  color: $color-primary;
+}
+
+.distanceTag {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.cardBody {
+  margin-bottom: $spacing-md;
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.infoIcon {
+  width: 32rpx;
+  margin-right: $spacing-sm;
+  text-align: center;
+}
+
+.infoText {
+  flex: 1;
+  @include text-ellipsis;
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-divider;
+}
+
+.organizer {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.organizerAvatar {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: $radius-round;
+  margin-right: $spacing-sm;
+}
+
+.organizerName {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  @include text-ellipsis;
+}
+
+.feeBox {
+  display: flex;
+  align-items: baseline;
+}
+
+.feeAmount {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+}
+
+.feeUnit {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-left: 4rpx;
+}
+
+.freeText {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-success;
+}
+
+.statusTag {
+  font-size: $font-size-xs;
+  padding: 6rpx 16rpx;
+  border-radius: $radius-sm;
+  font-weight: $font-weight-medium;
+}
+
+.statusRecruiting {
+  background: rgba(0, 180, 42, 0.1);
+  color: $color-success;
+}
+
+.statusFull {
+  background: rgba(255, 125, 0, 0.1);
+  color: $color-warning;
+}
+
+.statusOngoing {
+  background: rgba(0, 180, 216, 0.1);
+  color: $color-info;
+}
+
+.participantBox {
+  display: flex;
+  align-items: center;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.participantNum {
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}

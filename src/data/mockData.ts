@@ -134,6 +134,9 @@ export const mockActivities: Activity[] = [
       icon: '⛅',
     },
     participants: mockUsers.slice(0, 5),
+    waitlistUsers: mockUsers.slice(5, 8),
+    groupChatId: 'c1',
+    paidUserIds: [],
     createdAt: '2026-06-05 10:00:00',
   },
   {
@@ -164,6 +167,9 @@ export const mockActivities: Activity[] = [
       icon: '☀️',
     },
     participants: mockUsers.slice(2, 6),
+    waitlistUsers: [mockUsers[6]],
+    groupChatId: 'c2',
+    paidUserIds: ['u3', 'u4'],
     createdAt: '2026-06-06 14:30:00',
   },
   {
@@ -198,6 +204,9 @@ export const mockActivities: Activity[] = [
       icon: '☀️',
     },
     participants: mockUsers.slice(0, 3),
+    waitlistUsers: [],
+    groupChatId: 'c3',
+    paidUserIds: [],
     createdAt: '2026-06-04 09:00:00',
   },
   {
@@ -223,6 +232,9 @@ export const mockActivities: Activity[] = [
     distance: 2.3,
     status: 'full',
     participants: mockUsers.slice(0, 6),
+    waitlistUsers: mockUsers.slice(6, 11),
+    groupChatId: 'c4',
+    paidUserIds: [],
     createdAt: '2026-06-03 20:00:00',
   },
   {
@@ -253,6 +265,9 @@ export const mockActivities: Activity[] = [
       icon: '☁️',
     },
     participants: [mockUsers[5]],
+    waitlistUsers: [],
+    groupChatId: 'c5',
+    paidUserIds: ['u6'],
     createdAt: '2026-06-07 11:00:00',
   },
   {
@@ -287,6 +302,9 @@ export const mockActivities: Activity[] = [
       icon: '☀️',
     },
     participants: [mockUsers[0]],
+    waitlistUsers: [],
+    groupChatId: 'c6',
+    paidUserIds: [],
     createdAt: '2026-06-02 08:00:00',
   },
   {
@@ -317,6 +335,9 @@ export const mockActivities: Activity[] = [
       icon: '⛅',
     },
     participants: mockUsers.slice(0, 2),
+    waitlistUsers: [],
+    groupChatId: 'c7',
+    paidUserIds: ['u1'],
     createdAt: '2026-06-06 16:00:00',
   },
 ];

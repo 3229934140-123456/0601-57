@@ -1,9 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, Image, Input, ScrollView } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import Taro, { useRouter } from '@tarojs/taro';
 import classNames from 'classnames';
 import styles from './index.module.scss';
-import { mockChatSessions } from '@/data/mockData';
 import { useAppStore } from '@/store/useAppStore';
 import type { ChatSession, ChatMessage, VoteData } from '@/types';
 import dayjs from 'dayjs';
@@ -11,7 +10,9 @@ import dayjs from 'dayjs';
 type TabType = 'activity' | 'private';
 
 const ChatPage: React.FC = () => {
+  const router = useRouter();
   const currentUser = useAppStore(state => state.currentUser);
+  const chatSessions = useAppStore(state => state.chatSessions);
   const chatMessages = useAppStore(state => state.chatMessages);
   const activities = useAppStore(state => state.activities);
   const addChatMessage = useAppStore(state => state.addChatMessage);
@@ -26,12 +27,23 @@ const ChatPage: React.FC = () => {
   const [pollOptions, setPollOptions] = useState<string[]>(['', '']);
   const [newOptionText, setNewOptionText] = useState('');
 
+  useEffect(() => {
+    const activityId = router.params.activityId;
+    if (activityId) {
+      const session = chatSessions.find(s => s.activityId === activityId);
+      if (session) {
+        setSelectedSession(session);
+        Taro.setNavigationBarTitle({ title: session.title });
+      }
+    }
+  }, [router.params.activityId, chatSessions]);
+
   const messages = useMemo(() => {
     if (!selectedSession) return [];
     return chatMessages[selectedSession.id] || [];
   }, [selectedSession, chatMessages]);
 
-  const filteredSessions = mockChatSessions.filter(s => s.type === activeTab);
+  const filteredSessions = chatSessions.filter(s => s.type === activeTab);
 
   const handleSessionClick = (session: ChatSession) => {
     console.log('[Chat] 打开会话:', session.id);
@@ -82,18 +94,87 @@ const ChatPage: React.FC = () => {
       content: `确定采用「${optionText}」作为新的活动时间吗？`,
       success: (res) => {
         if (res.confirm) {
-          const timeMatch = optionText.match(/(\d{1,2}):(\d{2})|(\d{1,2})点|上午(\d+)|下午(\d+)/);
-          let newTime = '09:00';
-          if (timeMatch) {
-            if (timeMatch[1] && timeMatch[2]) {
-              newTime = `${timeMatch[1]}:${timeMatch[2]}`;
-            } else if (timeMatch[3]) {
-              newTime = `${timeMatch[3].padStart(2, '0')}:00`;
-            } else if (timeMatch[4]) {
-              newTime = `${timeMatch[4].padStart(2, '0')}:00`;
-            } else if (timeMatch[5]) {
-              newTime = `${Number(timeMatch[5]) + 12}:00`;
+          const activity = activities.find(a => a.id === selectedSession.activityId);
+          if (!activity) return;
+
+          const baseDate = dayjs(activity.startTime);
+          let newDateTime = dayjs(activity.startTime);
+          let parsed = false;
+
+          const fullDateMatch = optionText.match(/(\d{1,2})[月\-\/](\d{1,2})[日\-\/]?\s*(\d{1,2}):(\d{2})/);
+          if (fullDateMatch) {
+            const month = Number(fullDateMatch[1]);
+            const day = Number(fullDateMatch[2]);
+            const hour = Number(fullDateMatch[3]);
+            const minute = Number(fullDateMatch[4]);
+            newDateTime = baseDate.month(month - 1).date(day).hour(hour).minute(minute).second(0);
+            parsed = true;
+          }
+
+          if (!parsed) {
+            const weekDayMap: Record<string, number> = {
+              '周日': 0, '星期日': 0, '周天': 0,
+              '周一': 1, '星期一': 1,
+              '周二': 2, '星期二': 2,
+              '周三': 3, '星期三': 3,
+              '周四': 4, '星期四': 4,
+              '周五': 5, '星期五': 5,
+              '周六': 6, '星期六': 6, '礼拜六': 6,
+            };
+
+            let dayOffset = 0;
+            if (optionText.includes('明天')) dayOffset = 1;
+            else if (optionText.includes('后天')) dayOffset = 2;
+            else {
+              for (const [weekday, dayIdx] of Object.entries(weekDayMap)) {
+                if (optionText.includes(weekday)) {
+                  const today = baseDate.day();
+                  let diff = dayIdx - today;
+                  if (diff <= 0) diff += 7;
+                  dayOffset = diff;
+                  break;
+                }
+              }
             }
+
+            let hour = 9;
+            let minute = 0;
+
+            const timeMatch = optionText.match(/(\d{1,2}):(\d{2})/);
+            if (timeMatch) {
+              hour = Number(timeMatch[1]);
+              minute = Number(timeMatch[2]);
+              parsed = true;
+            }
+
+            if (!parsed) {
+              const hourMatch = optionText.match(/(上午|早上|凌晨|早晨|am|AM)\s*(\d{1,2})/);
+              if (hourMatch) {
+                hour = Number(hourMatch[2]);
+                parsed = true;
+              }
+            }
+
+            if (!parsed) {
+              const hourMatch = optionText.match(/(下午|晚上|傍晚|pm|PM)\s*(\d{1,2})/);
+              if (hourMatch) {
+                hour = Number(hourMatch[2]) + 12;
+                parsed = true;
+              }
+            }
+
+            if (!parsed) {
+              const hourMatch = optionText.match(/(\d{1,2})\s*点/);
+              if (hourMatch) {
+                hour = Number(hourMatch[1]);
+                if (optionText.includes('下午') || optionText.includes('晚上')) {
+                  if (hour < 12) hour += 12;
+                }
+                parsed = true;
+              }
+            }
+
+            newDateTime = baseDate.add(dayOffset, 'day').hour(hour).minute(minute).second(0);
           }
 
           adoptVoteTime(
@@ -101,7 +182,7 @@ const ChatPage: React.FC = () => {
             selectedSession.id,
             messageId,
             optionIndex,
-            newTime
+            newDateTime.format('YYYY-MM-DD HH:mm:ss')
           );
 
           Taro.showToast({ title: '已采用', icon: 'success' });

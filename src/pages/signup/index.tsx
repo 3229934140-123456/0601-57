@@ -18,21 +18,25 @@ const SignupPage: React.FC = () => {
   const joinedActivities = useAppStore(state => state.joinedActivities);
   const waitlistActivities = useAppStore(state => state.waitlistActivities);
   const checkedInActivities = useAppStore(state => state.checkedInActivities);
+  const paidActivities = useAppStore(state => state.paidActivities);
   const joinActivity = useAppStore(state => state.joinActivity);
   const cancelJoin = useAppStore(state => state.cancelJoin);
   const joinWaitlist = useAppStore(state => state.joinWaitlist);
   const cancelWaitlist = useAppStore(state => state.cancelWaitlist);
   const checkIn = useAppStore(state => state.checkIn);
+  const payAA = useAppStore(state => state.payAA);
 
   const activity = useMemo<Activity | undefined>(() => {
     return activities.find(a => a.id === activityId);
   }, [activities, activityId]);
 
   const [showAADetail, setShowAADetail] = useState(false);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
 
   const isJoined = joinedActivities.includes(activityId);
   const isWaitlist = waitlistActivities.includes(activityId);
   const isCheckedIn = checkedInActivities.includes(activityId);
+  const isPaid = paidActivities.includes(activityId);
 
   const sportConfig = activity ? sportTypeConfigs.find(s => s.key === activity.sportType) : null;
   const levelConfig = activity ? skillLevelConfigs.find(l => l.key === activity.skillLevel) : null;
@@ -125,7 +129,25 @@ const SignupPage: React.FC = () => {
 
   const handleChat = () => {
     console.log('[Signup] 进入活动群聊');
-    Taro.switchTab({ url: '/pages/chat/index' });
+    if (activity?.groupChatId) {
+      Taro.navigateTo({ url: `/pages/chat/index?activityId=${activity.id}` });
+    } else {
+      Taro.switchTab({ url: '/pages/chat/index' });
+    }
+  };
+
+  const handlePayAA = () => {
+    Taro.showModal({
+      title: '确认付款',
+      content: `确认支付 AA ￥${activity?.fee || 0} 元？`,
+      confirmText: '确认付款',
+      success: (res) => {
+        if (res.confirm) {
+          payAA(activity!.id, currentUser.id);
+          Taro.showToast({ title: '付款成功', icon: 'success' });
+        }
+      },
+    });
   };
 
   const handleShare = () => {
@@ -202,7 +224,7 @@ const SignupPage: React.FC = () => {
       { key: 'checkin', label: '签到', done: isCheckedIn, active: isOngoing && isJoined },
     ];
     if (activity.feeType === 'aa' && isJoined) {
-      steps.push({ key: 'aa', label: 'AA付款', done: false, active: false });
+      steps.push({ key: 'aa', label: 'AA付款', done: isPaid, active: isOngoing && isJoined });
     }
     return steps;
   };
@@ -388,6 +410,14 @@ const SignupPage: React.FC = () => {
                 <Text className={styles.myStatusValue}>未开始</Text>
               </View>
             )}
+            {activity.feeType === 'aa' && (
+              <View className={styles.myStatusItem}>
+                <Text className={styles.myStatusLabel}>AA付款</Text>
+                <Text className={classNames(styles.myStatusValue, isPaid && styles.myStatusSuccess)}>
+                  {isPaid ? '已付款' : '待付款'}
+                </Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -471,17 +501,26 @@ const SignupPage: React.FC = () => {
           {isWaitlist && (
             <View className={styles.myWaitlistItem}>
               <View className={styles.myWaitlistBadge}>我在候补</View>
-              <Text className={styles.myWaitlistRank}>第 {Math.min(getWaitlistCount(), 3)} 位</Text>
+              <Text className={styles.myWaitlistRank}>第 {getMyWaitlistRank()} 位</Text>
             </View>
           )}
-          <View className={styles.waitlistItem}>
-            <View className={styles.waitlistRank}>1</View>
-            <Image
-              className={styles.waitlistAvatar}
-              src="https://picsum.photos/id/1025/200/200"
-              mode="aspectFill"
-            />
-            <Text className={styles.waitlistName}>等待中的用户...</Text>
+          <View className={styles.waitlistList}>
+            {activity.waitlistUsers?.map((user, idx) => {
+              const isMe = user.id === currentUser.id;
+              return (
+                <View key={user.id} className={styles.waitlistItem}>
+                  <View className={styles.waitlistRank}>{idx + 1}</View>
+                  <Image
+                    className={styles.waitlistAvatar}
+                    src={user.avatar}
+                    mode="aspectFill"
+                  />
+                  <Text className={styles.waitlistName}>
+                    {isMe ? '我' : user.nickname}
+                  </Text>
+                </View>
+              );
+            })}
           </View>
         </View>
       )}
@@ -499,34 +538,55 @@ const SignupPage: React.FC = () => {
         </View>
       )}
 
-      {aaRecord && isJoined && (
+      {activity.feeType === 'aa' && activity.fee > 0 && isJoined && (
         <View className={styles.aaSection}>
           <View className={styles.aaHeader}>
             <Text className={styles.sectionTitle}>AA费用</Text>
             <View className={styles.aaTotal}>
-              人均 <strong>¥{aaRecord.perPerson}</strong>
+              人均 <strong>¥{activity.fee}</strong>
             </View>
           </View>
-          <View className={styles.aaList}>
-            {aaRecord.participants.map(p => (
-              <View key={p.userId} className={styles.aaItem}>
-                <Image
-                  className={styles.aaAvatar}
-                  src={p.userAvatar}
-                  mode="aspectFill"
-                />
-                <Text className={styles.aaName}>{p.userName}</Text>
-                <View
-                  className={classNames(
-                    styles.aaStatus,
-                    p.hasPaid ? styles.aaPaid : styles.aaUnpaid
-                  )}
-                >
-                  {p.hasPaid ? '已付款' : '待付款'}
-                </View>
-              </View>
-            ))}
+          <View className={styles.aaSummary}>
+            <Text className={styles.aaPaidCount}>
+              已付 {activity.paidUserIds?.length || 0}/{activity.currentParticipants} 人
+            </Text>
           </View>
+          <View className={styles.aaList}>
+            {activity.participants?.map(user => {
+              const hasPaid = activity.paidUserIds?.includes(user.id) || false;
+              const isMe = user.id === currentUser.id;
+              return (
+                <View key={user.id} className={styles.aaItem}>
+                  <Image
+                    className={styles.aaAvatar}
+                    src={user.avatar}
+                    mode="aspectFill"
+                  />
+                  <Text className={styles.aaName}>
+                    {isMe ? '我' : user.nickname}
+                  </Text>
+                  <View
+                    className={classNames(
+                      styles.aaStatus,
+                      hasPaid ? styles.aaPaid : styles.aaUnpaid
+                    )}
+                  >
+                    {hasPaid ? '已付款' : '待付款'}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+          {isJoined && !isPaid && (
+            <View className={styles.aaPayBtn} onClick={handlePayAA}>
+              <Text className={styles.aaPayBtnText}>确认付款 ¥{activity.fee}</Text>
+            </View>
+          )}
+          {isJoined && isPaid && (
+            <View className={styles.aaPaidTip}>
+              <Text className={styles.aaPaidTipText}>✓ 你已完成付款</Text>
+            </View>
+          )}
         </View>
       )}
 
@@ -537,7 +597,7 @@ const SignupPage: React.FC = () => {
         {isOrganizer ? (
           <button
             className={styles.primaryBtn}
-            onClick={() => Taro.showToast({ title: '管理活动', icon: 'none' })}
+            onClick={() => setShowAdminPanel(true)}
           >
             管理活动
           </button>
@@ -550,6 +610,11 @@ const SignupPage: React.FC = () => {
                 disabled={isCheckedIn}
               >
                 {isCheckedIn ? '✓ 已签到' : '签到'}
+              </button>
+            )}
+            {activity.feeType === 'aa' && !isPaid && (
+              <button className={styles.payBtn} onClick={handlePayAA}>
+                AA付款
               </button>
             )}
             <button
@@ -574,6 +639,124 @@ const SignupPage: React.FC = () => {
           </button>
         )}
       </View>
+
+      {showAdminPanel && (
+        <View className={styles.adminModal} onClick={() => setShowAdminPanel(false)}>
+          <View className={styles.adminModalContent} onClick={e => e.stopPropagation()}>
+            <View className={styles.adminModalHeader}>
+              <Text className={styles.adminModalTitle}>活动管理</Text>
+              <Text className={styles.adminClose} onClick={() => setShowAdminPanel(false)}>✕</Text>
+            </View>
+
+            <ScrollView className={styles.adminModalBody} scrollY>
+              <View className={styles.adminSection}>
+                <View className={styles.adminSectionHeader}>
+                  <Text className={styles.adminSectionTitle}>报名成员</Text>
+                  <Text className={styles.adminSectionCount}>{activity.currentParticipants}/{activity.maxParticipants}人</Text>
+                </View>
+                <View className={styles.adminUserList}>
+                  {activity.participants?.map(user => {
+                    const hasCheckedIn = activity.checkInTimes?.[user.id];
+                    const hasPaid = activity.paidUserIds?.includes(user.id);
+                    return (
+                      <View key={user.id} className={styles.adminUserItem}>
+                        <Image
+                          className={styles.adminUserAvatar}
+                          src={user.avatar}
+                          mode="aspectFill"
+                        />
+                        <View className={styles.adminUserInfo}>
+                          <Text className={styles.adminUserName}>{user.nickname}</Text>
+                          <View className={styles.adminUserTags}>
+                            {hasCheckedIn && (
+                              <View className={styles.adminTagSuccess}>已签到</View>
+                            )}
+                            {activity.feeType === 'aa' && (
+                              <View className={classNames(
+                                styles.adminTag,
+                                hasPaid ? styles.adminTagSuccess : styles.adminTagWarning
+                              )}>
+                                {hasPaid ? '已付款' : '待付款'}
+                              </View>
+                            )}
+                          </View>
+                        </View>
+                        {hasCheckedIn && (
+                          <Text className={styles.adminCheckInTime}>
+                            {dayjs(hasCheckedIn).format('HH:mm')}
+                          </Text>
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {activity.waitlistUsers && activity.waitlistUsers.length > 0 && (
+                <View className={styles.adminSection}>
+                  <View className={styles.adminSectionHeader}>
+                    <Text className={styles.adminSectionTitle}>候补名单</Text>
+                    <Text className={styles.adminSectionCount}>{activity.waitlistUsers.length}人</Text>
+                  </View>
+                  <View className={styles.adminUserList}>
+                    {activity.waitlistUsers.map((user, idx) => (
+                      <View key={user.id} className={styles.adminUserItem}>
+                        <View className={styles.adminWaitlistRank}>{idx + 1}</View>
+                        <Image
+                          className={styles.adminUserAvatar}
+                          src={user.avatar}
+                          mode="aspectFill"
+                        />
+                        <View className={styles.adminUserInfo}>
+                          <Text className={styles.adminUserName}>{user.nickname}</Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              <View className={styles.adminSection}>
+                <View className={styles.adminSectionHeader}>
+                  <Text className={styles.adminSectionTitle}>签到统计</Text>
+                </View>
+                <View className={styles.adminStatsRow}>
+                  <View className={styles.adminStatItem}>
+                    <Text className={styles.adminStatNum}>{Object.keys(activity.checkInTimes || {}).length}</Text>
+                    <Text className={styles.adminStatLabel}>已签到</Text>
+                  </View>
+                  <View className={styles.adminStatItem}>
+                    <Text className={styles.adminStatNum}>{activity.currentParticipants - Object.keys(activity.checkInTimes || {}).length}</Text>
+                    <Text className={styles.adminStatLabel}>未签到</Text>
+                  </View>
+                </View>
+              </View>
+
+              {activity.feeType === 'aa' && activity.fee > 0 && (
+                <View className={styles.adminSection}>
+                  <View className={styles.adminSectionHeader}>
+                    <Text className={styles.adminSectionTitle}>AA付款统计</Text>
+                  </View>
+                  <View className={styles.adminStatsRow}>
+                    <View className={styles.adminStatItem}>
+                      <Text className={styles.adminStatNum}>{activity.paidUserIds?.length || 0}</Text>
+                      <Text className={styles.adminStatLabel}>已付款</Text>
+                    </View>
+                    <View className={styles.adminStatItem}>
+                      <Text className={styles.adminStatNum}>¥{((activity.paidUserIds?.length || 0) * activity.fee)}</Text>
+                      <Text className={styles.adminStatLabel}>已收金额</Text>
+                    </View>
+                    <View className={styles.adminStatItem}>
+                      <Text className={styles.adminStatNum}>¥{(activity.currentParticipants * activity.fee) - ((activity.paidUserIds?.length || 0) * activity.fee)}</Text>
+                      <Text className={styles.adminStatLabel}>待收金额</Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      )}
     </ScrollView>
   );
 };

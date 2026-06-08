@@ -147,10 +147,10 @@ const PublishPage: React.FC = () => {
       feeType,
       distance: Number((Math.random() * 5 + 0.5).toFixed(1)),
       status: 'recruiting',
-      routeInfo: hasRoute && routeDistance ? {
-        distance: Number(routeDistance),
-        duration: routeDuration || '待定',
-        waypoints: routeWaypoints,
+      routeInfo: hasRoute && (routeDistance || routeStartPoint || routeEndPoint || routeWaypoints.length > 0) ? {
+        distance: routeDistance ? Number(routeDistance) : undefined,
+        duration: routeDuration || undefined,
+        waypoints: routeWaypoints.length > 0 ? routeWaypoints : undefined,
         points: buildRoutePoints(),
       } : undefined,
       weather: {
@@ -158,8 +158,9 @@ const PublishPage: React.FC = () => {
         condition: '晴',
         icon: '☀️',
       },
-      participants: [],
-      waitlist: [],
+      participants: [currentUser],
+      waitlistUsers: [],
+      paidUserIds: [],
       createdAt: new Date().toISOString(),
     };
 

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Activity, ChatMessage, EquipmentItem, Venue, User } from '@/types';
-import { mockActivities, mockChatMessages, mockVenues, currentUser } from '@/data/mockData';
+import type { Activity, ChatMessage, ChatSession, EquipmentItem, Venue, User } from '@/types';
+import { mockActivities, mockChatMessages, mockChatSessions, mockVenues, currentUser, mockUsers } from '@/data/mockData';
 
 interface AppSettings {
   messageNotify: boolean;
@@ -15,6 +15,7 @@ interface AppSettings {
 interface AppState {
   activities: Activity[];
   currentUser: User;
+  chatSessions: ChatSession[];
   chatMessages: Record<string, ChatMessage[]>;
   userVotes: Record<string, number>;
   equipmentPreferences: EquipmentItem[];
@@ -23,6 +24,7 @@ interface AppState {
   joinedActivities: string[];
   waitlistActivities: string[];
   checkedInActivities: string[];
+  paidActivities: string[];
   publishedActivities: string[];
 
   addActivity: (activity: Activity) => void;
@@ -32,16 +34,19 @@ interface AppState {
   joinWaitlist: (activityId: string) => void;
   cancelWaitlist: (activityId: string) => void;
   checkIn: (activityId: string, userId: string) => void;
+  payAA: (activityId: string, userId: string) => void;
+  addChatSession: (session: ChatSession) => void;
   addChatMessage: (sessionId: string, message: ChatMessage) => void;
   vote: (sessionId: string, messageId: string, optionIndex: number, userId: string) => void;
   setEquipmentPreferences: (items: EquipmentItem[]) => void;
   setFavoriteVenues: (venues: Venue[]) => void;
   updateSettings: (settings: Partial<AppSettings>) => void;
   updateUserProfile: (user: Partial<User>) => void;
-  adoptVoteTime: (activityId: string, sessionId: string, messageId: string, optionIndex: number, newTime: string) => void;
+  adoptVoteTime: (activityId: string, sessionId: string, messageId: string, optionIndex: number, newDateTime: string) => void;
 }
 
 const initialActivities = mockActivities.map(a => ({ ...a }));
+const initialChatSessions = mockChatSessions.map(s => ({ ...s }));
 const initialChatMessages: Record<string, ChatMessage[]> = {
   c1: [...mockChatMessages],
   c2: mockChatMessages.slice(0, 3),
@@ -62,6 +67,7 @@ export const useAppStore = create<AppState>()(
     (set, get) => ({
       activities: initialActivities,
       currentUser: { ...currentUser },
+      chatSessions: initialChatSessions,
       chatMessages: initialChatMessages,
       userVotes: {},
       equipmentPreferences: defaultEquipment,
@@ -77,14 +83,44 @@ export const useAppStore = create<AppState>()(
       joinedActivities: ['a1', 'a2'],
       waitlistActivities: ['a4'],
       checkedInActivities: [],
+      paidActivities: [],
       publishedActivities: ['a6'],
 
       addActivity: (activity) => {
+        const groupChatId = `gc_${activity.id}`;
+        const newSession: ChatSession = {
+          id: groupChatId,
+          type: 'activity',
+          title: activity.title,
+          lastMessage: '群聊已创建，快来聊聊吧~',
+          lastMessageTime: new Date().toISOString(),
+          unreadCount: 0,
+          activityId: activity.id,
+          members: [activity.organizer],
+        };
+
+        const systemMessage: ChatMessage = {
+          id: `sys_${Date.now()}`,
+          sessionId: groupChatId,
+          senderId: 'system',
+          senderName: '系统',
+          type: 'system',
+          content: `🎉 「${activity.title}」活动群已创建`,
+          timestamp: new Date().toISOString(),
+        };
+
+        const activityWithGroup = { ...activity, groupChatId };
+
         set(state => ({
-          activities: [activity, ...state.activities],
+          activities: [activityWithGroup, ...state.activities],
           publishedActivities: [activity.id, ...state.publishedActivities],
+          chatSessions: [newSession, ...state.chatSessions],
+          chatMessages: {
+            ...state.chatMessages,
+            [groupChatId]: [systemMessage],
+          },
         }));
-        console.log('[Store] 活动已添加:', activity.title);
+        console.log('[Store] 活动已添加，群已创建:', activity.title);
       },
 
       updateActivity: (activityId, updates) => {
@@ -98,14 +134,31 @@ export const useAppStore = create<AppState>()(
 
       joinActivity: (activityId) => {
         set(state => {
+          const user = state.currentUser;
           const activities = state.activities.map(a => {
             if (a.id === activityId && a.currentParticipants < a.maxParticipants) {
-              return { ...a, currentParticipants: a.currentParticipants + 1 };
+              const participants = [...(a.participants || []), user];
+              return { 
+                ...a, 
+                currentParticipants: a.currentParticipants + 1,
+                participants,
+              };
             }
             return a;
           });
+
+          const activity = activities.find(a => a.id === activityId);
+          const chatSessions = state.chatSessions.map(s => {
+            if (s.activityId === activityId) {
+              const members = [...(s.members || []), user];
+              return { ...s, members };
+            }
+            return s;
+          });
+
           return {
             activities,
+            chatSessions,
             joinedActivities: [...state.joinedActivities, activityId],
           };
         });
@@ -114,16 +167,58 @@ export const useAppStore = create<AppState>()(
 
       cancelJoin: (activityId) => {
         set(state => {
+          const user = state.currentUser;
+          let promotedUser: User | null = null;
+
           const activities = state.activities.map(a => {
             if (a.id === activityId && a.currentParticipants > 0) {
-              return { ...a, currentParticipants: a.currentParticipants - 1 };
+              const waitlistUsers = a.waitlistUsers || [];
+              const participants = (a.participants || []).filter(p => p.id !== user.id);
+              
+              let newParticipants = participants;
+              let newWaitlistUsers = waitlistUsers;
+              let newWaitlistCount = a.waitlistCount;
+
+              if (waitlistUsers.length > 0) {
+                promotedUser = waitlistUsers[0];
+                newParticipants = [...participants, promotedUser];
+                newWaitlistUsers = waitlistUsers.slice(1);
+                newWaitlistCount = Math.max(0, a.waitlistCount - 1);
+              }
+
+              return { 
+                ...a, 
+                currentParticipants: newParticipants.length,
+                participants: newParticipants,
+                waitlistUsers: newWaitlistUsers,
+                waitlistCount: newWaitlistCount,
+              };
             }
             return a;
           });
+
+          let waitlistActivities = state.waitlistActivities;
+          let joinedActivities = state.joinedActivities.filter(id => id !== activityId);
+
+          if (promotedUser && promotedUser.id === user.id) {
+            // 不应该发生，因为是取消报名的人不是候补中第一位
+          }
+
+          if (promotedUser) {
+            const promotedUserId = promotedUser.id;
+            if (promotedUserId === state.currentUser.id) {
+              waitlistActivities = waitlistActivities.filter(id => id !== activityId);
+              joinedActivities = [...joinedActivities, activityId];
+            }
+          }
+
+          const checkedInActivities = state.checkedInActivities.filter(id => id !== activityId);
+
           return {
             activities,
-            joinedActivities: state.joinedActivities.filter(id => id !== activityId),
-            checkedInActivities: state.checkedInActivities.filter(id => id !== activityId),
+            joinedActivities,
+            waitlistActivities,
+            checkedInActivities,
           };
         });
         console.log('[Store] 取消报名:', activityId);
@@ -131,9 +226,15 @@ export const useAppStore = create<AppState>()(
 
       joinWaitlist: (activityId) => {
         set(state => {
+          const user = state.currentUser;
           const activities = state.activities.map(a => {
             if (a.id === activityId) {
-              return { ...a, waitlistCount: (a.waitlistCount || 0) + 1 };
+              const waitlistUsers = [...(a.waitlistUsers || []), user];
+              return { 
+                ...a, 
+                waitlistCount: (a.waitlistCount || 0) + 1,
+                waitlistUsers,
+              };
             }
             return a;
           });
@@ -147,9 +248,15 @@ export const useAppStore = create<AppState>()(
 
       cancelWaitlist: (activityId) => {
         set(state => {
+          const user = state.currentUser;
           const activities = state.activities.map(a => {
             if (a.id === activityId && (a.waitlistCount || 0) > 0) {
-              return { ...a, waitlistCount: (a.waitlistCount || 0) - 1 };
+              const waitlistUsers = (a.waitlistUsers || []).filter(u => u.id !== user.id);
+              return { 
+                ...a, 
+                waitlistCount: Math.max(0, (a.waitlistCount || 0) - 1),
+                waitlistUsers,
+              };
             }
             return a;
           });
@@ -186,13 +293,54 @@ export const useAppStore = create<AppState>()(
         console.log('[Store] 签到成功:', activityId);
       },
 
-      addChatMessage: (sessionId, message) => {
+      payAA: (activityId, userId) => {
+        set(state => {
+          if (state.paidActivities.includes(activityId)) {
+            return {};
+          }
+          const activities = state.activities.map(a => {
+            if (a.id === activityId) {
+              const paidUserIds = [...(a.paidUserIds || []), userId];
+              return { ...a, paidUserIds };
+            }
+            return a;
+          });
+          return {
+            activities,
+            paidActivities: [...state.paidActivities, activityId],
+          };
+        });
+        console.log('[Store] AA付款成功:', activityId);
+      },
+
+      addChatSession: (session) => {
         set(state => ({
-          chatMessages: {
-            ...state.chatMessages,
-            [sessionId]: [...(state.chatMessages[sessionId] || []), message],
-          },
+          chatSessions: [session, ...state.chatSessions],
         }));
+      },
+
+      addChatMessage: (sessionId, message) => {
+        set(state => {
+          const chatSessions = state.chatSessions.map(s => {
+            if (s.id === sessionId) {
+              return {
+                ...s,
+                lastMessage: message.type === 'text' ? message.content : `[${message.type === 'vote' ? '投票' : message.type === 'image' ? '图片' : '消息'}]`,
+                lastMessageTime: message.timestamp,
+                unreadCount: s.unreadCount + 1,
+              };
+            }
+            return s;
+          });
+
+          return {
+            chatSessions,
+            chatMessages: {
+              ...state.chatMessages,
+              [sessionId]: [...(state.chatMessages[sessionId] || []), message],
+            },
+          };
+        });
         console.log('[Store] 消息已发送:', sessionId, message.type);
       },
 
@@ -263,19 +411,34 @@ export const useAppStore = create<AppState>()(
         console.log('[Store] 更新用户资料');
       },
 
-      adoptVoteTime: (activityId, sessionId, messageId, optionIndex, newTime) => {
+      adoptVoteTime: (activityId, sessionId, messageId, optionIndex, newDateTime) => {
         set(state => {
           const activity = state.activities.find(a => a.id === activityId);
           if (!activity) return {};
 
-          const startDate = activity.startTime.split(' ')[0];
-          const newStartTime = `${startDate} ${newTime}:00`;
-          
           const startMs = new Date(activity.startTime).getTime();
           const endMs = new Date(activity.endTime).getTime();
           const durationMs = endMs - startMs;
-          const newStartMs = new Date(newStartTime).getTime();
+          
+          let newStartMs: number;
+          try {
+            newStartMs = new Date(newDateTime).getTime();
+            if (isNaN(newStartMs)) {
+              throw new Error('Invalid date');
+            }
+          } catch {
+            const timeMatch = newDateTime.match(/(\d{1,2}):(\d{2})/);
+            if (timeMatch) {
+              const today = new Date();
+              today.setHours(Number(timeMatch[1]), Number(timeMatch[2]), 0, 0);
+              newStartMs = today.getTime();
+            } else {
+              return {};
+            }
+          }
+
           const newEndMs = newStartMs + durationMs;
+          const newStartTime = new Date(newStartMs).toISOString().replace('T', ' ').slice(0, 19);
           const newEndTime = new Date(newEndMs).toISOString().replace('T', ' ').slice(0, 19);
 
           const activities = state.activities.map(a =>
@@ -286,7 +449,7 @@ export const useAppStore = create<AppState>()(
 
           const sessionMessages = state.chatMessages[sessionId] || [];
           const voteMsg = sessionMessages.find(m => m.id === messageId);
-          const optionText = voteMsg?.voteData?.options[optionIndex] || newTime;
+          const optionText = voteMsg?.voteData?.options[optionIndex] || newDateTime;
 
           const systemMessage: ChatMessage = {
             id: `sys_${Date.now()}`,
@@ -294,19 +457,31 @@ export const useAppStore = create<AppState>()(
             senderId: 'system',
             senderName: '系统',
             type: 'system',
-            content: `📢 投票结果已采用：${optionText}\n活动时间已更新`,
+            content: `📢 投票结果已采用：${optionText}\n活动时间已更新为 ${newStartTime.slice(5, 16)}`,
             timestamp: new Date().toISOString(),
           };
 
+          const chatSessions = state.chatSessions.map(s => {
+            if (s.id === sessionId) {
+              return {
+                ...s,
+                lastMessage: `活动时间已更新：${optionText}`,
+                lastMessageTime: systemMessage.timestamp,
+              };
+            }
+            return s;
+          });
+
           return {
             activities,
+            chatSessions,
             chatMessages: {
               ...state.chatMessages,
               [sessionId]: [...sessionMessages, systemMessage],
             },
           };
         });
-        console.log('[Store] 投票时间已采用:', activityId, newTime);
+        console.log('[Store] 投票时间已采用:', activityId, newDateTime);
       },
     }),
     {
@@ -314,6 +489,7 @@ export const useAppStore = create<AppState>()(
       partialize: (state) => ({
         activities: state.activities,
         currentUser: state.currentUser,
+        chatSessions: state.chatSessions,
         chatMessages: state.chatMessages,
         userVotes: state.userVotes,
         equipmentPreferences: state.equipmentPreferences,
@@ -322,6 +498,7 @@ export const useAppStore = create<AppState>()(
         joinedActivities: state.joinedActivities,
         waitlistActivities: state.waitlistActivities,
         checkedInActivities: state.checkedInActivities,
+        paidActivities: state.paidActivities,
         publishedActivities: state.publishedActivities,
       }),
     }

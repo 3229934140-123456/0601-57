@@ -152,6 +152,22 @@
   border-radius: $radius-sm;
 }
 
+.needPayBadge {
+  font-size: $font-size-xs;
+  color: $color-warning;
+  background: rgba($color-warning, 0.1);
+  padding: 4rpx 12rpx;
+  border-radius: $radius-sm;
+}
+
+.paidBadge {
+  font-size: $font-size-xs;
+  color: $color-success;
+  background: rgba($color-success, 0.1);
+  padding: 4rpx 12rpx;
+  border-radius: $radius-sm;
+}
+
 .cardBody {
   margin-bottom: $spacing-md;
 }
@@ -217,6 +233,15 @@
 
     Text {
       color: $color-error;
+    }
+  }
+
+  &.payActionBtn {
+    background: $color-warning;
+    border-color: $color-warning;
+
+    Text {
+      color: $color-bg-card;
     }
   }
 }

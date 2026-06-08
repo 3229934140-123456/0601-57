@@ -17,10 +17,12 @@ const MyActivitiesPage: React.FC = () => {
   const joinedActivities = useAppStore(state => state.joinedActivities);
   const waitlistActivities = useAppStore(state => state.waitlistActivities);
   const checkedInActivities = useAppStore(state => state.checkedInActivities);
+  const paidActivities = useAppStore(state => state.paidActivities);
   const publishedActivities = useAppStore(state => state.publishedActivities);
   const cancelJoin = useAppStore(state => state.cancelJoin);
   const cancelWaitlist = useAppStore(state => state.cancelWaitlist);
   const checkIn = useAppStore(state => state.checkIn);
+  const payAA = useAppStore(state => state.payAA);
 
   const [activeTab, setActiveTab] = useState<TabType>('joined');
 
@@ -117,9 +119,28 @@ const MyActivitiesPage: React.FC = () => {
     });
   };
 
-  const handleChat = (e: any) => {
+  const handleChat = (e: any, activity?: Activity) => {
     e.stopPropagation();
-    Taro.switchTab({ url: '/pages/chat/index' });
+    if (activity?.groupChatId) {
+      Taro.navigateTo({ url: `/pages/chat/index?activityId=${activity.id}` });
+    } else {
+      Taro.switchTab({ url: '/pages/chat/index' });
+    }
+  };
+
+  const handlePayAA = (e: any, activity: Activity) => {
+    e.stopPropagation();
+    Taro.showModal({
+      title: '确认付款',
+      content: `确认支付 AA ￥${activity.fee} 元？`,
+      confirmText: '确认付款',
+      success: (res) => {
+        if (res.confirm) {
+          payAA(activity.id, currentUser.id);
+          Taro.showToast({ title: '付款成功', icon: 'success' });
+        }
+      },
+    });
   };
 
   const isOngoing = (activity: Activity) => {
@@ -140,6 +161,8 @@ const MyActivitiesPage: React.FC = () => {
     const levelConfig = getLevelConfig(activity.skillLevel);
     const isOngoingNow = isOngoing(activity);
     const checked = isCheckedIn(activity.id);
+    const isPaid = paidActivities.includes(activity.id);
+    const needPay = activity.feeType === 'aa' && activity.fee > 0 && !isPaid;
 
     return (
       <View
@@ -168,6 +191,12 @@ const MyActivitiesPage: React.FC = () => {
               )}
               {type === 'joined' && !checked && isOngoingNow && (
                 <View className={styles.canCheckInBadge}>可签到</View>
+              )}
+              {type === 'joined' && needPay && (
+                <View className={styles.needPayBadge}>待付款</View>
+              )}
+              {type === 'joined' && isPaid && activity.feeType === 'aa' && (
+                <View className={styles.paidBadge}>已付款</View>
               )}
             </View>
           </View>
@@ -218,7 +247,15 @@ const MyActivitiesPage: React.FC = () => {
               <Text>取消候补</Text>
             </View>
           )}
-          <View className={styles.actionBtn} onClick={(e) => handleChat(e)}>
+          {type === 'joined' && needPay && (
+            <View
+              className={classNames(styles.actionBtn, styles.payActionBtn)}
+              onClick={(e) => handlePayAA(e, activity)}
+            >
+              <Text>付款</Text>
+            </View>
+          )}
+          <View className={styles.actionBtn} onClick={(e) => handleChat(e, activity)}>
             <Text>群聊</Text>
           </View>
           <View

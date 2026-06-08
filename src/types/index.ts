@@ -54,8 +54,8 @@ export interface Activity {
   distance?: number;
   status: ActivityStatus;
   routeInfo?: {
-    distance: number;
-    duration: string;
+    distance?: number;
+    duration?: string;
     waypoints?: string[];
     points?: RoutePoint[];
   };
@@ -65,8 +65,10 @@ export interface Activity {
     icon: string;
   };
   participants?: User[];
-  waitlist?: User[];
+  waitlistUsers?: User[];
   checkInTimes?: Record<string, string>;
+  paidUserIds?: string[];
+  groupChatId?: string;
   createdAt: string;
 }
 

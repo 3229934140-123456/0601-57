@@ -46,6 +46,7 @@ export interface Activity {
   routeInfo?: {
     distance: number;
     duration: string;
+    waypoints?: string[];
   };
   weather?: {
     temperature: number;
@@ -74,6 +75,7 @@ export interface ChatSession {
 // 聊天消息
 export interface ChatMessage {
   id: string;
+  sessionId?: string;
   senderId: string;
   senderName?: string;
   senderAvatar?: string;
@@ -82,11 +84,22 @@ export interface ChatMessage {
   timestamp: string;
   voteOptions?: string[];
   voteResults?: number[];
+  voteData?: VoteData;
   location?: {
     latitude: number;
     longitude: number;
     address: string;
   };
+}
+
+// 投票数据
+export interface VoteData {
+  title: string;
+  options: string[];
+  results: number[];
+  userVotes: Record<string, number>;
+  creatorId: string;
+  creatorName: string;
 }
 
 // 投票活动
@@ -140,6 +153,13 @@ export interface AARecord {
 export interface EquipmentPreference {
   sportType: SportType;
   items: string[];
+}
+
+// 装备项
+export interface EquipmentItem {
+  id: string;
+  icon: string;
+  name: string;
 }
 
 // 场馆

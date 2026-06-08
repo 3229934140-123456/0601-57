@@ -1,14 +1,19 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, ScrollView } from '@tarojs/components';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, Image } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import classNames from 'classnames';
 import styles from './index.module.scss';
-import { mockActivities, sportTypeConfigs } from '@/data/mockData';
+import { sportTypeConfigs } from '@/data/mockData';
+import { useAppStore } from '@/store/useAppStore';
 import type { Activity } from '@/types';
+import dayjs from 'dayjs';
 
 const MapPage: React.FC = () => {
+  const activities = useAppStore(state => state.activities);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const scrollRef = useRef<any>(null);
+  const [showRouteDetail, setShowRouteDetail] = useState(false);
+
+  const selectedActivity = activities.find(a => a.id === selectedId);
 
   const getMarkerPosition = (activity: Activity) => {
     const baseLat = activity.location.latitude;
@@ -24,17 +29,20 @@ const MapPage: React.FC = () => {
 
   const handleMarkerClick = (id: string) => {
     setSelectedId(id);
-    const index = mockActivities.findIndex(a => a.id === id);
-    if (index >= 0 && scrollRef.current) {
-      console.log('[Map] 滚动到活动:', index);
-    }
+    setShowRouteDetail(true);
   };
 
   const handleCardClick = (id: string) => {
     setSelectedId(id);
-    Taro.navigateTo({
-      url: `/pages/signup/index?id=${id}`,
-    });
+    setShowRouteDetail(true);
+  };
+
+  const handleViewDetail = () => {
+    if (selectedId) {
+      Taro.navigateTo({
+        url: `/pages/signup/index?id=${selectedId}`,
+      });
+    }
   };
 
   const handleLocate = () => {
@@ -75,6 +83,9 @@ const MapPage: React.FC = () => {
     }
   };
 
+  const hasRouteTypes = ['run', 'cycling', 'hiking'];
+  const hasRoute = selectedActivity?.routeInfo || (selectedActivity && hasRouteTypes.includes(selectedActivity.sportType));
+
   return (
     <View className={styles.pageContainer}>
       <View className={styles.mapContainer}>
@@ -88,14 +99,29 @@ const MapPage: React.FC = () => {
             <View className={styles.roadV} style={{ left: '65%', top: 0, bottom: 0 }} />
           </View>
 
-          {mockActivities.map(activity => {
+          {selectedActivity && showRouteDetail && hasRoute && (
+            <View className={styles.routeLine}>
+              <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }}>
+                <path
+                  d={`M 30% 40% Q 50% 20%, 70% 50% T 85% 65%`}
+                  stroke={getSportConfig(selectedActivity.sportType)?.color || '#FF6B35'}
+                  strokeWidth="4"
+                  strokeDasharray="8,8"
+                  fill="none"
+                  opacity="0.6"
+                />
+              </svg>
+            </View>
+          )}
+
+          {activities.map(activity => {
             const pos = getMarkerPosition(activity);
             const sportConfig = getSportConfig(activity.sportType);
             const isSelected = selectedId === activity.id;
             return (
               <View
                 key={activity.id}
-                className={styles.mapMarker}
+                className={classNames(styles.mapMarker, isSelected && styles.mapMarkerActive)}
                 style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
                 onClick={() => handleMarkerClick(activity.id)}
               >
@@ -106,7 +132,7 @@ const MapPage: React.FC = () => {
                   <Text>{sportConfig?.icon}</Text>
                 </View>
                 <Text className={classNames(styles.markerLabel, isSelected && styles.markerLabelActive)}>
-                  {activity.title.length > 8 ? activity.title.slice(0, 8) + '...' : activity.title}
+                  {activity.title.length > 10 ? activity.title.slice(0, 10) + '...' : activity.title}
                 </Text>
               </View>
             );
@@ -135,48 +161,121 @@ const MapPage: React.FC = () => {
         </View>
       </View>
 
-      <View className={styles.activityPanel}>
-        <View className={styles.panelHandle} />
-        <View className={styles.panelHeader}>
-          <Text className={styles.panelTitle}>附近活动</Text>
-          <Text className={styles.panelCount}>共 {mockActivities.length} 个</Text>
-        </View>
-
-        <ScrollView
-          className={styles.activityList}
-          scrollY
-          style={{ maxHeight: '400rpx' }}
-          ref={scrollRef}
-        >
-          {mockActivities.map(activity => {
-            const sportConfig = getSportConfig(activity.sportType);
-            const isSelected = selectedId === activity.id;
-            return (
+      {showRouteDetail && selectedActivity ? (
+        <View className={styles.routeDetailPanel}>
+          <View className={styles.panelHandle} onClick={() => setShowRouteDetail(false)} />
+          <View className={styles.routeDetailHeader}>
+            <View style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
               <View
-                key={activity.id}
-                className={classNames(styles.miniCard, isSelected && styles.miniCardActive)}
-                onClick={() => handleCardClick(activity.id)}
+                className={styles.routeTypeIcon}
+                style={{ backgroundColor: `${getSportConfig(selectedActivity.sportType)?.color}15` }}
               >
+                <Text>{getSportConfig(selectedActivity.sportType)?.icon}</Text>
+              </View>
+              <View style={{ flex: 1, marginLeft: 16 }}>
+                <Text className={styles.routeTitle}>{selectedActivity.title}</Text>
+                <Text className={styles.routeSubtitle}>
+                  {dayjs(selectedActivity.startTime).format('MM-DD HH:mm')} 开始
+                </Text>
+              </View>
+            </View>
+            <View className={classNames(styles.miniStatus, getStatusClass(selectedActivity.status))}>
+              {getStatusText(selectedActivity.status)}
+            </View>
+          </View>
+
+          {hasRoute ? (
+            <View className={styles.routeInfoCard}>
+              <View className={styles.routeInfoItem}>
+                <Text className={styles.routeInfoValue}>
+                  {selectedActivity.routeInfo?.distance || 8}
+                </Text>
+                <Text className={styles.routeInfoLabel}>公里</Text>
+              </View>
+              <View className={styles.routeDivider} />
+              <View className={styles.routeInfoItem}>
+                <Text className={styles.routeInfoValue}>
+                  {selectedActivity.routeInfo?.duration || '约1小时'}
+                </Text>
+                <Text className={styles.routeInfoLabel}>预计时长</Text>
+              </View>
+              <View className={styles.routeDivider} />
+              <View className={styles.routeInfoItem}>
+                <Text className={styles.routeInfoValue}>
+                  {selectedActivity.currentParticipants}
+                </Text>
+                <Text className={styles.routeInfoLabel}>已报名</Text>
+              </View>
+            </View>
+          ) : (
+            <View className={styles.noRouteHint}>
+              <Text className={styles.noRouteIcon}>🏟️</Text>
+              <Text className={styles.noRouteText}>该活动为场馆活动，无路线信息</Text>
+              <Text className={styles.noRouteDesc}>在集合地点集合开展活动</Text>
+            </View>
+          )}
+
+          <View className={styles.locationRow}>
+            <Text className={styles.locationIconText}>📍</Text>
+            <View style={{ flex: 1 }}>
+              <Text className={styles.locationName}>{selectedActivity.location.name}</Text>
+              <Text className={styles.locationAddress}>{selectedActivity.location.address}</Text>
+            </View>
+            <Text className={styles.locationDistance}>{selectedActivity.distance}km</Text>
+          </View>
+
+          <View className={styles.routeDetailFooter}>
+            <button className={styles.secondaryBtn} onClick={() => setShowRouteDetail(false)}>
+              收起
+            </button>
+            <button className={styles.primaryBtn} onClick={handleViewDetail}>
+              查看详情
+            </button>
+          </View>
+        </View>
+      ) : (
+        <View className={styles.activityPanel}>
+          <View className={styles.panelHandle} />
+          <View className={styles.panelHeader}>
+            <Text className={styles.panelTitle}>附近活动</Text>
+            <Text className={styles.panelCount}>共 {activities.length} 个</Text>
+          </View>
+
+          <ScrollView
+            className={styles.activityList}
+            scrollY
+            style={{ maxHeight: '400rpx' }}
+          >
+            {activities.map(activity => {
+              const sportConfig = getSportConfig(activity.sportType);
+              const isSelected = selectedId === activity.id;
+              return (
                 <View
-                  className={styles.miniIcon}
-                  style={{ backgroundColor: `${sportConfig?.color}15` }}
+                  key={activity.id}
+                  className={classNames(styles.miniCard, isSelected && styles.miniCardActive)}
+                  onClick={() => handleCardClick(activity.id)}
                 >
-                  <Text>{sportConfig?.icon}</Text>
-                </View>
-                <View className={styles.miniInfo}>
-                  <Text className={styles.miniTitle}>{activity.title}</Text>
-                  <View className={styles.miniMeta}>
-                    <Text>📍 {activity.location.name}</Text>
-                    <View className={classNames(styles.miniStatus, getStatusClass(activity.status))}>
-                      {getStatusText(activity.status)}
+                  <View
+                    className={styles.miniIcon}
+                    style={{ backgroundColor: `${sportConfig?.color}15` }}
+                  >
+                    <Text>{sportConfig?.icon}</Text>
+                  </View>
+                  <View className={styles.miniInfo}>
+                    <Text className={styles.miniTitle}>{activity.title}</Text>
+                    <View className={styles.miniMeta}>
+                      <Text>📍 {activity.location.name}</Text>
+                      <View className={classNames(styles.miniStatus, getStatusClass(activity.status))}>
+                        {getStatusText(activity.status)}
+                      </View>
                     </View>
                   </View>
                 </View>
-              </View>
-            );
-          })}
-        </ScrollView>
-      </View>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
     </View>
   );
 };

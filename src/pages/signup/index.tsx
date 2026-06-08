@@ -3,30 +3,53 @@ import { View, Text, Image, ScrollView } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import classNames from 'classnames';
 import styles from './index.module.scss';
-import { mockActivities, mockAARecords, sportTypeConfigs, skillLevelConfigs, currentUser } from '@/data/mockData';
+import { mockAARecords, sportTypeConfigs, skillLevelConfigs } from '@/data/mockData';
 import type { Activity } from '@/types';
 import { useRouter } from '@tarojs/taro';
+import { useAppStore } from '@/store/useAppStore';
+import dayjs from 'dayjs';
 
 const SignupPage: React.FC = () => {
   const router = useRouter();
   const activityId = router.params.id || 'a1';
 
-  const activity = useMemo<Activity>(() => {
-    return mockActivities.find(a => a.id === activityId) || mockActivities[0];
-  }, [activityId]);
+  const activities = useAppStore(state => state.activities);
+  const currentUser = useAppStore(state => state.currentUser);
+  const joinedActivities = useAppStore(state => state.joinedActivities);
+  const waitlistActivities = useAppStore(state => state.waitlistActivities);
+  const checkedInActivities = useAppStore(state => state.checkedInActivities);
+  const joinActivity = useAppStore(state => state.joinActivity);
+  const cancelJoin = useAppStore(state => state.cancelJoin);
+  const joinWaitlist = useAppStore(state => state.joinWaitlist);
+  const cancelWaitlist = useAppStore(state => state.cancelWaitlist);
+  const checkIn = useAppStore(state => state.checkIn);
 
-  const [isJoined, setIsJoined] = useState(false);
-  const [isWaitlist, setIsWaitlist] = useState(false);
-  const [isCheckedIn, setIsCheckedIn] = useState(false);
+  const activity = useMemo<Activity | undefined>(() => {
+    return activities.find(a => a.id === activityId);
+  }, [activities, activityId]);
+
   const [showAADetail, setShowAADetail] = useState(false);
 
-  const sportConfig = sportTypeConfigs.find(s => s.key === activity.sportType);
-  const levelConfig = skillLevelConfigs.find(l => l.key === activity.skillLevel);
-  const aaRecord = mockAARecords.find(r => r.activityId === activity.id);
+  const isJoined = joinedActivities.includes(activityId);
+  const isWaitlist = waitlistActivities.includes(activityId);
+  const isCheckedIn = checkedInActivities.includes(activityId);
+
+  const sportConfig = activity ? sportTypeConfigs.find(s => s.key === activity.sportType) : null;
+  const levelConfig = activity ? skillLevelConfigs.find(l => l.key === activity.skillLevel) : null;
+  const aaRecord = activity ? mockAARecords.find(r => r.activityId === activity.id) : null;
+
+  if (!activity) {
+    return (
+      <View className={styles.emptyState}>
+        <Text>活动不存在</Text>
+      </View>
+    );
+  }
 
   const isOrganizer = activity.organizer.id === currentUser.id;
   const canSignup = activity.status === 'recruiting';
   const isFull = activity.status === 'full' || activity.currentParticipants >= activity.maxParticipants;
+  const isOngoing = activity.status === 'ongoing' || dayjs().isAfter(dayjs(activity.startTime).subtract(30, 'minute'));
 
   const handleJoin = () => {
     if (isFull) {
@@ -36,9 +59,8 @@ const SignupPage: React.FC = () => {
         confirmText: '加入候补',
         success: (res) => {
           if (res.confirm) {
-            setIsWaitlist(true);
+            joinWaitlist(activity.id);
             Taro.showToast({ title: '已加入候补', icon: 'success' });
-            console.log('[Signup] 加入候补列表');
           }
         },
       });
@@ -50,9 +72,8 @@ const SignupPage: React.FC = () => {
       content: `确定要报名「${activity.title}」吗？`,
       success: (res) => {
         if (res.confirm) {
-          setIsJoined(true);
+          joinActivity(activity.id);
           Taro.showToast({ title: '报名成功', icon: 'success' });
-          console.log('[Signup] 报名成功:', activity.title);
         }
       },
     });
@@ -66,10 +87,23 @@ const SignupPage: React.FC = () => {
       confirmColor: '#F53F3F',
       success: (res) => {
         if (res.confirm) {
-          setIsJoined(false);
-          setIsWaitlist(false);
+          cancelJoin(activity.id);
           Taro.showToast({ title: '已取消报名', icon: 'success' });
-          console.log('[Signup] 取消报名');
+        }
+      },
+    });
+  };
+
+  const handleCancelWaitlist = () => {
+    Taro.showModal({
+      title: '取消候补',
+      content: '确定要取消候补吗？',
+      confirmText: '确定取消',
+      confirmColor: '#F53F3F',
+      success: (res) => {
+        if (res.confirm) {
+          cancelWaitlist(activity.id);
+          Taro.showToast({ title: '已取消候补', icon: 'success' });
         }
       },
     });
@@ -81,9 +115,9 @@ const SignupPage: React.FC = () => {
       content: '确认到达活动地点并签到？',
       success: (res) => {
         if (res.confirm) {
-          setIsCheckedIn(true);
+          checkIn(activity.id);
           Taro.showToast({ title: '签到成功', icon: 'success' });
-          console.log('[Signup] 签到成功');
+          Taro.vibrateShort({ type: 'medium' });
         }
       },
     });
@@ -138,14 +172,17 @@ const SignupPage: React.FC = () => {
   };
 
   const formatDate = (time: string) => {
-    const date = new Date(time);
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    const hour = date.getHours().toString().padStart(2, '0');
-    const minute = date.getMinutes().toString().padStart(2, '0');
+    const date = dayjs(time);
+    const month = date.month() + 1;
+    const day = date.date();
+    const hour = date.format('HH:mm');
     const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-    const weekDay = weekDays[date.getDay()];
-    return `${month}月${day}日 ${weekDay} ${hour}:${minute}`;
+    const weekDay = weekDays[date.day()];
+    return `${month}月${day}日 ${weekDay} ${hour}`;
+  };
+
+  const getWaitlistCount = () => {
+    return activity.waitlistCount || 0;
   };
 
   return (
@@ -190,7 +227,7 @@ const SignupPage: React.FC = () => {
           <View className={styles.infoContent}>
             <Text className={styles.infoLabel}>活动时间</Text>
             <Text className={styles.infoValue}>
-              {formatDate(activity.startTime)} - {formatDate(activity.endTime).split(' ')[2]}
+              {formatDate(activity.startTime)} - {dayjs(activity.endTime).format('HH:mm')}
             </Text>
           </View>
         </View>
@@ -247,6 +284,15 @@ const SignupPage: React.FC = () => {
               <Text className={styles.routeValue}>{activity.routeInfo.duration}</Text>
               <Text className={styles.routeLabel}>预计时长</Text>
             </View>
+            {activity.routeInfo.waypoints && activity.routeInfo.waypoints.length > 0 && (
+              <View style={{ width: 1, height: 48, background: '#E5E6EB' }} />
+            )}
+            {activity.routeInfo.waypoints && activity.routeInfo.waypoints.length > 0 && (
+              <View className={styles.routeItem}>
+                <Text className={styles.routeValue}>{activity.routeInfo.waypoints.length}</Text>
+                <Text className={styles.routeLabel}>途经点</Text>
+              </View>
+            )}
           </View>
         )}
       </View>
@@ -297,12 +343,18 @@ const SignupPage: React.FC = () => {
         </View>
       </View>
 
-      {activity.waitlistCount > 0 && (
+      {getWaitlistCount() > 0 && (
         <View className={styles.waitlistSection}>
           <View className={styles.waitlistHeader}>
             <Text className={styles.sectionTitle}>候补名单</Text>
-            <Text className={styles.waitlistCount}>{activity.waitlistCount}人</Text>
+            <Text className={styles.waitlistCount}>{getWaitlistCount()}人</Text>
           </View>
+          {isWaitlist && (
+            <View className={styles.myWaitlistItem}>
+              <View className={styles.myWaitlistBadge}>我在候补</View>
+              <Text className={styles.myWaitlistRank}>第 {Math.min(getWaitlistCount(), 3)} 位</Text>
+            </View>
+          )}
           <View className={styles.waitlistItem}>
             <View className={styles.waitlistRank}>1</View>
             <Image
@@ -311,6 +363,19 @@ const SignupPage: React.FC = () => {
               mode="aspectFill"
             />
             <Text className={styles.waitlistName}>等待中的用户...</Text>
+          </View>
+        </View>
+      )}
+
+      {isWaitlist && getWaitlistCount() === 0 && (
+        <View className={styles.waitlistSection}>
+          <View className={styles.waitlistHeader}>
+            <Text className={styles.sectionTitle}>候补名单</Text>
+            <Text className={styles.waitlistCount}>1人</Text>
+          </View>
+          <View className={styles.myWaitlistItem}>
+            <View className={styles.myWaitlistBadge}>我在候补</View>
+            <Text className={styles.myWaitlistRank}>第 1 位</Text>
           </View>
         </View>
       )}
@@ -359,25 +424,25 @@ const SignupPage: React.FC = () => {
           </button>
         ) : isJoined ? (
           <>
-            {activity.status === 'ongoing' && (
+            {isOngoing && (
               <button
-                className={styles.signInBtn}
+                className={classNames(styles.signInBtn, isCheckedIn && styles.signInBtnDone)}
                 onClick={handleCheckIn}
                 disabled={isCheckedIn}
               >
-                {isCheckedIn ? '已签到' : '签到'}
+                {isCheckedIn ? '✓ 已签到' : '签到'}
               </button>
             )}
             <button
-              className={styles.primaryBtn}
+              className={styles.cancelBtn}
               onClick={handleCancel}
-              style={{ flex: 1 }}
+              style={isOngoing ? { flex: 1 } : { flex: 2 }}
             >
               取消报名
             </button>
           </>
         ) : isWaitlist ? (
-          <button className={styles.primaryBtn} onClick={handleCancel}>
+          <button className={styles.cancelBtn} onClick={handleCancelWaitlist}>
             取消候补
           </button>
         ) : (

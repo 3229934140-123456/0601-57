@@ -1,19 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, Image, Input, ScrollView } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import classNames from 'classnames';
 import styles from './index.module.scss';
-import { mockChatSessions, mockChatMessages, currentUser } from '@/data/mockData';
-import type { ChatSession, ChatMessage } from '@/types';
+import { mockChatSessions } from '@/data/mockData';
+import { useAppStore } from '@/store/useAppStore';
+import type { ChatSession, ChatMessage, VoteData } from '@/types';
 import dayjs from 'dayjs';
 
 type TabType = 'activity' | 'private';
 
 const ChatPage: React.FC = () => {
+  const currentUser = useAppStore(state => state.currentUser);
+  const chatMessages = useAppStore(state => state.chatMessages);
+  const addChatMessage = useAppStore(state => state.addChatMessage);
+  const vote = useAppStore(state => state.vote);
+
   const [activeTab, setActiveTab] = useState<TabType>('activity');
   const [selectedSession, setSelectedSession] = useState<ChatSession | null>(null);
   const [inputText, setInputText] = useState('');
-  const [messages, setMessages] = useState<ChatMessage[]>(mockChatMessages);
+  const [showPollModal, setShowPollModal] = useState(false);
+  const [pollTitle, setPollTitle] = useState('');
+  const [pollOptions, setPollOptions] = useState<string[]>(['', '']);
+  const [newOptionText, setNewOptionText] = useState('');
+
+  const messages = useMemo(() => {
+    if (!selectedSession) return [];
+    return chatMessages[selectedSession.id] || [];
+  }, [selectedSession, chatMessages]);
 
   const filteredSessions = mockChatSessions.filter(s => s.type === activeTab);
 
@@ -29,10 +43,11 @@ const ChatPage: React.FC = () => {
   };
 
   const handleSendMessage = () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || !selectedSession) return;
 
     const newMessage: ChatMessage = {
       id: `m_${Date.now()}`,
+      sessionId: selectedSession.id,
       senderId: currentUser.id,
       senderName: currentUser.nickname,
       senderAvatar: currentUser.avatar,
@@ -41,22 +56,24 @@ const ChatPage: React.FC = () => {
       timestamp: new Date().toISOString(),
     };
 
-    setMessages(prev => [...prev, newMessage]);
+    addChatMessage(selectedSession.id, newMessage);
     setInputText('');
-    console.log('[Chat] 发送消息:', inputText);
   };
 
-  const handleVote = (optionIndex: number) => {
-    console.log('[Chat] 投票选项:', optionIndex);
-    Taro.showToast({ title: '投票成功', icon: 'success' });
+  const handleVote = (messageId: string, optionIndex: number) => {
+    if (!selectedSession) return;
+    vote(selectedSession.id, messageId, optionIndex, currentUser.id);
+    Taro.vibrateShort({ type: 'light' });
   };
 
   const handleLocationShare = () => {
+    if (!selectedSession) return;
     console.log('[Chat] 发送位置');
     Taro.chooseLocation({
       success: (res) => {
         const newMessage: ChatMessage = {
           id: `m_${Date.now()}`,
+          sessionId: selectedSession.id,
           senderId: currentUser.id,
           senderName: currentUser.nickname,
           senderAvatar: currentUser.avatar,
@@ -69,7 +86,7 @@ const ChatPage: React.FC = () => {
             address: res.address || '',
           },
         };
-        setMessages(prev => [...prev, newMessage]);
+        addChatMessage(selectedSession.id, newMessage);
       },
       fail: (err) => {
         console.error('[Chat] 选择位置失败:', err);
@@ -78,8 +95,75 @@ const ChatPage: React.FC = () => {
   };
 
   const handlePoll = () => {
-    console.log('[Chat] 发起投票');
-    Taro.showToast({ title: '投票功能开发中', icon: 'none' });
+    setShowPollModal(true);
+    setPollTitle('活动改期投票');
+    setPollOptions(['周六下午3点', '周日上午9点']);
+    setNewOptionText('');
+  };
+
+  const handleAddOption = () => {
+    const trimmed = newOptionText.trim();
+    if (!trimmed) return;
+    if (pollOptions.length >= 6) {
+      Taro.showToast({ title: '最多6个选项', icon: 'none' });
+      return;
+    }
+    setPollOptions([...pollOptions, trimmed]);
+    setNewOptionText('');
+  };
+
+  const handleRemoveOption = (index: number) => {
+    if (pollOptions.length <= 2) {
+      Taro.showToast({ title: '至少2个选项', icon: 'none' });
+      return;
+    }
+    setPollOptions(pollOptions.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateOption = (index: number, value: string) => {
+    const newOptions = [...pollOptions];
+    newOptions[index] = value;
+    setPollOptions(newOptions);
+  };
+
+  const handleSendPoll = () => {
+    if (!selectedSession) return;
+    const trimmedTitle = pollTitle.trim();
+    const validOptions = pollOptions.filter(o => o.trim());
+    if (!trimmedTitle) {
+      Taro.showToast({ title: '请输入投票主题', icon: 'none' });
+      return;
+    }
+    if (validOptions.length < 2) {
+      Taro.showToast({ title: '至少2个选项', icon: 'none' });
+      return;
+    }
+
+    const voteData: VoteData = {
+      title: trimmedTitle,
+      options: validOptions,
+      results: validOptions.map(() => 0),
+      userVotes: {},
+      creatorId: currentUser.id,
+      creatorName: currentUser.nickname,
+    };
+
+    const newMessage: ChatMessage = {
+      id: `m_${Date.now()}`,
+      sessionId: selectedSession.id,
+      senderId: currentUser.id,
+      senderName: currentUser.nickname,
+      senderAvatar: currentUser.avatar,
+      type: 'vote',
+      content: trimmedTitle,
+      timestamp: new Date().toISOString(),
+      voteData,
+    };
+
+    addChatMessage(selectedSession.id, newMessage);
+    setShowPollModal(false);
+    setPollTitle('');
+    setPollOptions(['', '']);
   };
 
   const formatTime = (time: string) => {
@@ -98,6 +182,16 @@ const ChatPage: React.FC = () => {
     }
   };
 
+  const getTotalVotes = (voteData?: VoteData) => {
+    if (!voteData?.results) return 0;
+    return voteData.results.reduce((sum, n) => sum + n, 0);
+  };
+
+  const getUserVoteIndex = (voteData?: VoteData) => {
+    if (!voteData?.userVotes) return -1;
+    return voteData.userVotes[currentUser.id] ?? -1;
+  };
+
   if (selectedSession) {
     return (
       <View className={styles.chatDetailContainer}>
@@ -107,43 +201,27 @@ const ChatPage: React.FC = () => {
           <Text className={styles.chatMore}>⋯</Text>
         </View>
 
-        <ScrollView className={styles.chatMessages} scrollY scrollWithAnimation scrollIntoView="msg_bottom">
+        <ScrollView
+          className={styles.chatMessages}
+          scrollY
+          scrollWithAnimation
+          scrollIntoView="msg_bottom"
+        >
           {messages.map((msg, index) => {
             const isSelf = msg.senderId === currentUser.id;
-            const isSystem = msg.type === 'system';
-            const showTime = index === 0 || dayjs(msg.timestamp).diff(dayjs(messages[index - 1].timestamp), 'minute') > 5;
+            const isVote = msg.type === 'vote';
+            const showTime =
+              index === 0 ||
+              dayjs(msg.timestamp).diff(dayjs(messages[index - 1].timestamp), 'minute') > 5;
 
-            if (isSystem) {
-              return (
-                <View key={msg.id}>
-                  {showTime && <View className={styles.messageTime}>{formatDate(msg.timestamp)}</View>}
-                  <View className={styles.messageSystem}>
-                    <Text className={styles.systemText}>{msg.content}</Text>
-                  </View>
-                  {msg.voteOptions && (
-                    <View className={styles.voteCard}>
-                      <Text className={styles.voteTitle}>{msg.content}</Text>
-                      {msg.voteOptions.map((option, idx) => (
-                        <View
-                          key={idx}
-                          className={styles.voteOption}
-                          onClick={() => handleVote(idx)}
-                        >
-                          <Text className={styles.voteOptionText}>{option}</Text>
-                          <Text className={styles.voteOptionCount}>
-                            {msg.voteResults?.[idx] || 0}票
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-                </View>
-              );
-            }
+            const voteData = msg.voteData;
+            const totalVotes = getTotalVotes(voteData);
+            const userVotedIndex = getUserVoteIndex(voteData);
 
             return (
               <View key={msg.id}>
                 {showTime && <View className={styles.messageTime}>{formatDate(msg.timestamp)}</View>}
+
                 <View className={classNames(styles.messageItem, isSelf && styles.messageSelf)}>
                   <Image
                     className={styles.messageAvatar}
@@ -151,18 +229,80 @@ const ChatPage: React.FC = () => {
                     mode="aspectFill"
                   />
                   <View className={classNames(styles.messageBubble, isSelf && styles.messageSelfBubble)}>
-                    {msg.type === 'text' && (
-                      <Text className={styles.messageText}>{msg.content}</Text>
+                    {!isVote && (
+                      <View>
+                        <Text className={styles.senderName}>{msg.senderName}</Text>
+                        {msg.type === 'text' && (
+                          <Text className={styles.messageText}>{msg.content}</Text>
+                        )}
+                        {msg.type === 'location' && msg.location && (
+                          <View className={styles.locationCard}>
+                            <View className={styles.locationIcon}>
+                              <Text>📍</Text>
+                            </View>
+                            <View className={styles.locationInfo}>
+                              <Text className={styles.locationName}>{msg.content}</Text>
+                              <Text className={styles.locationAddr}>{msg.location.address}</Text>
+                            </View>
+                          </View>
+                        )}
+                      </View>
                     )}
-                    {msg.type === 'location' && msg.location && (
-                      <View className={styles.locationCard}>
-                        <View className={styles.locationIcon}>
-                          <Text>📍</Text>
+
+                    {isVote && voteData && (
+                      <View className={styles.voteCard}>
+                        <View className={styles.voteCardHeader}>
+                          <Text className={styles.voteTitleIcon}>📊</Text>
+                          <View style={{ flex: 1 }}>
+                            <Text className={styles.voteTitle}>{voteData.title}</Text>
+                            <Text className={styles.voteSubtitle}>
+                              {voteData.creatorName} 发起 · 共 {totalVotes} 票
+                            </Text>
+                          </View>
                         </View>
-                        <View className={styles.locationInfo}>
-                          <Text className={styles.locationName}>{msg.content}</Text>
-                          <Text className={styles.locationAddr}>{msg.location.address}</Text>
+
+                        <View className={styles.voteOptions}>
+                          {voteData.options.map((option, idx) => {
+                            const count = voteData.results?.[idx] || 0;
+                            const percentage = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
+                            const isVoted = userVotedIndex === idx;
+
+                            return (
+                              <View
+                                key={idx}
+                                className={classNames(
+                                  styles.voteOption,
+                                  isVoted && styles.voteOptionVoted
+                                )}
+                                onClick={() => handleVote(msg.id, idx)}
+                              >
+                                <View className={styles.voteOptionProgress}>
+                                  <View
+                                    className={styles.voteOptionBar}
+                                    style={{ width: `${percentage}%` }}
+                                  />
+                                </View>
+                                <View className={styles.voteOptionContent}>
+                                  <Text
+                                    className={classNames(
+                                      styles.voteOptionText,
+                                      isVoted && styles.voteOptionTextVoted
+                                    )}
+                                  >
+                                    {isVoted && '✓ '}{option}
+                                  </Text>
+                                  <Text className={styles.voteOptionCount}>
+                                    {count}票
+                                  </Text>
+                                </View>
+                              </View>
+                            );
+                          })}
                         </View>
+
+                        <Text className={styles.voteTip}>
+                          {userVotedIndex >= 0 ? '你已投票，可更改选择' : '点击选项参与投票'}
+                        </Text>
                       </View>
                     )}
                   </View>
@@ -194,6 +334,92 @@ const ChatPage: React.FC = () => {
             发送
           </button>
         </View>
+
+        {showPollModal && (
+          <View className={styles.modalOverlay} onClick={() => setShowPollModal(false)}>
+            <View className={styles.pollModal} onClick={(e) => e.stopPropagation && e.stopPropagation()}>
+              <View className={styles.pollModalHeader}>
+                <Text className={styles.pollModalTitle}>发起投票</Text>
+                <Text className={styles.pollModalClose} onClick={() => setShowPollModal(false)}>
+                  ✕
+                </Text>
+              </View>
+
+              <ScrollView className={styles.pollModalContent} scrollY>
+                <View className={styles.pollFormItem}>
+                  <Text className={styles.pollFormLabel}>投票主题</Text>
+                  <Input
+                    className={styles.pollFormInput}
+                    placeholder="请输入投票主题，如：活动改期投票"
+                    value={pollTitle}
+                    onInput={(e) => setPollTitle(e.detail.value)}
+                    maxlength={30}
+                  />
+                </View>
+
+                <View className={styles.pollFormItem}>
+                  <View className={styles.pollFormLabelRow}>
+                    <Text className={styles.pollFormLabel}>时间选项</Text>
+                    <Text className={styles.pollFormHint}>{pollOptions.length}/6</Text>
+                  </View>
+
+                  {pollOptions.map((option, idx) => (
+                    <View key={idx} className={styles.pollOptionRow}>
+                      <Text className={styles.pollOptionIndex}>{idx + 1}</Text>
+                      <Input
+                        className={styles.pollOptionInput}
+                        placeholder={`请输入第${idx + 1}个选项`}
+                        value={option}
+                        onInput={(e) => handleUpdateOption(idx, e.detail.value)}
+                        maxlength={20}
+                      />
+                      <Text
+                        className={classNames(
+                          styles.pollOptionRemove,
+                          pollOptions.length <= 2 && styles.pollOptionRemoveDisabled
+                        )}
+                        onClick={() => handleRemoveOption(idx)}
+                      >
+                        ✕
+                      </Text>
+                    </View>
+                  ))}
+
+                  {pollOptions.length < 6 && (
+                    <View className={styles.pollAddRow}>
+                      <View className={styles.pollAddInputWrap}>
+                        <Text className={styles.pollOptionIndex}>+</Text>
+                        <Input
+                          className={styles.pollAddInput}
+                          placeholder="添加新选项"
+                          value={newOptionText}
+                          onInput={(e) => setNewOptionText(e.detail.value)}
+                          onConfirm={handleAddOption}
+                          maxlength={20}
+                        />
+                      </View>
+                      <button className={styles.pollAddBtn} onClick={handleAddOption}>
+                        添加
+                      </button>
+                    </View>
+                  )}
+                </View>
+              </ScrollView>
+
+              <View className={styles.pollModalFooter}>
+                <button
+                  className={styles.pollCancelBtn}
+                  onClick={() => setShowPollModal(false)}
+                >
+                  取消
+                </button>
+                <button className={styles.pollSendBtn} onClick={handleSendPoll}>
+                  发送投票
+                </button>
+              </View>
+            </View>
+          </View>
+        )}
       </View>
     );
   }

@@ -137,7 +137,7 @@
 
 .creditScore {
   font-size: $font-size-xl;
-  font-weight: $font-bold;
+  font-weight: $font-weight-bold;
   color: $color-primary;
 }
 
@@ -381,4 +381,296 @@
   font-size: $font-size-xs;
   color: $color-primary;
   margin-left: $spacing-sm;
+}
+
+.emptyTip {
+  text-align: center;
+  padding: $spacing-lg 0;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+/* 弹窗样式 */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: $page-padding;
+}
+
+.modal {
+  width: 100%;
+  max-width: 620rpx;
+  max-height: 80vh;
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md $spacing-lg;
+  border-bottom: 1rpx solid $color-divider;
+  flex-shrink: 0;
+}
+
+.modalTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.modalClose {
+  font-size: 36rpx;
+  color: $color-text-tertiary;
+  padding: $spacing-xs;
+
+  &:active {
+    opacity: 0.6;
+  }
+}
+
+.modalContent {
+  flex: 1;
+  padding: $spacing-lg;
+  overflow-y: auto;
+}
+
+.modalFooter {
+  display: flex;
+  gap: $spacing-md;
+  padding: $spacing-md $spacing-lg $spacing-lg;
+  border-top: 1rpx solid $color-divider;
+  flex-shrink: 0;
+}
+
+.modalCancelBtn {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-md;
+  background: $color-bg-page;
+  border-radius: $radius-button;
+  color: $color-text-secondary;
+  font-size: $font-size-md;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.modalSaveBtn {
+  @include button-reset;
+  flex: 1.5;
+  height: $button-height-md;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-button;
+  color: $color-text-white;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.modalFormItem {
+  margin-bottom: $spacing-lg;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.modalFormLabel {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  margin-bottom: $spacing-sm;
+  display: block;
+}
+
+/* 装备编辑 */
+.equipmentAddRow {
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+}
+
+.iconPicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.iconOption {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: $radius-md;
+  background: $color-bg-card;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  border: 2rpx solid transparent;
+  transition: all $transition-fast;
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.iconOptionActive {
+  border-color: $color-primary;
+  background: rgba(255, 107, 53, 0.1);
+}
+
+.equipmentAddInput {
+  flex: 1;
+  height: 72rpx;
+  padding: 0 $spacing-md;
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  border: 2rpx solid $color-border;
+}
+
+.addBtn {
+  @include button-reset;
+  height: 72rpx;
+  padding: 0 $spacing-lg;
+  background: $color-primary;
+  border-radius: $radius-md;
+  color: $color-text-white;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.equipmentEditList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.equipmentEditItem {
+  display: flex;
+  align-items: center;
+  padding: $spacing-sm $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+}
+
+.removeBtn {
+  font-size: $font-size-xs;
+  color: $color-error;
+  padding: $spacing-xs $spacing-sm;
+
+  &:active {
+    opacity: 0.7;
+  }
+}
+
+/* 场馆编辑 */
+.addVenueBtn {
+  @include button-reset;
+  width: 100%;
+  height: 80rpx;
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(255, 140, 90, 0.1) 100%);
+  border: 2rpx dashed $color-primary;
+  border-radius: $radius-md;
+  color: $color-primary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.venueEditList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.venueEditItem {
+  display: flex;
+  align-items: center;
+  padding: $spacing-sm $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+}
+
+.venueEditIcon {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: $radius-sm;
+  background: rgba(0, 180, 216, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  margin-right: $spacing-sm;
+  flex-shrink: 0;
+}
+
+.venueEditName {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  margin-bottom: 4rpx;
+  display: block;
+}
+
+.venueEditAddr {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  @include text-ellipsis;
+  display: block;
+}
+
+/* 隐私设置 */
+.privacyList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.privacyItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+}
+
+.privacyTitle {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.privacyDesc {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  display: block;
 }

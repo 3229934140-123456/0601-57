@@ -8,7 +8,7 @@
 .tabTabs {
   display: flex;
   background: $color-bg-card;
-  padding: 0 $page-padding;
+  padding: 0 $spacing-xl;
   border-bottom: 1rpx solid $color-divider;
   position: sticky;
   top: 0;
@@ -22,7 +22,7 @@
   font-size: $font-size-md;
   color: $color-text-secondary;
   position: relative;
-  transition: all $transition-fast;
+  transition: color $transition-fast;
 
   &:active {
     opacity: 0.7;
@@ -30,8 +30,9 @@
 }
 
 .tabItemActive {
-  color: $color-primary;
+  color: $color-text-primary;
   font-weight: $font-weight-semibold;
+  font-size: $font-size-lg;
 }
 
 .tabIndicator {
@@ -41,44 +42,104 @@
   transform: translateX(-50%);
   width: 48rpx;
   height: 6rpx;
-  background: $color-primary;
+  background: linear-gradient(90deg, $color-primary 0%, $color-primary-light 100%);
   border-radius: 3rpx;
 }
 
+.noticeSection {
+  background: $color-bg-card;
+  margin: $spacing-md $page-padding;
+  border-radius: $radius-lg;
+  padding: $spacing-sm 0;
+  box-shadow: $shadow-card;
+}
+
+.noticeItem {
+  display: flex;
+  align-items: center;
+  padding: $spacing-md;
+  position: relative;
+
+  &:active {
+    background: $color-bg-page;
+  }
+
+  & + & {
+    border-top: 1rpx solid $color-divider;
+  }
+}
+
+.noticeIcon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-round;
+  background: linear-gradient(135deg, #FFF0E6 0%, #FFE0CC 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  margin-right: $spacing-md;
+}
+
+.noticeInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.noticeTitle {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  margin-bottom: 6rpx;
+}
+
+.noticeDesc {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  @include text-ellipsis;
+}
+
+.noticeBadge {
+  position: absolute;
+  right: $spacing-md;
+  top: $spacing-md;
+  min-width: 36rpx;
+  height: 36rpx;
+  line-height: 36rpx;
+  text-align: center;
+  background: $color-error;
+  color: #ffffff;
+  font-size: 20rpx;
+  border-radius: 18rpx;
+  padding: 0 10rpx;
+}
+
 .sessionList {
-  padding: $spacing-sm $page-padding;
+  background: $color-bg-card;
+  margin: 0 $page-padding;
+  border-radius: $radius-lg;
+  height: calc(100vh - 280rpx);
+  box-shadow: $shadow-card;
 }
 
 .sessionItem {
   display: flex;
   align-items: center;
-  padding: $spacing-md 0;
-  border-bottom: 1rpx solid $color-divider;
-  transition: all $transition-fast;
+  padding: $spacing-md;
+  position: relative;
 
   &:active {
-    background: $color-bg-hover;
-    margin: 0 (-$spacing-md);
-    padding: $spacing-md $spacing-md;
-    border-radius: $radius-md;
+    background: $color-bg-page;
   }
 
-  &:last-child {
-    border-bottom: none;
+  & + & {
+    border-top: 1rpx solid $color-divider;
   }
 }
 
 .sessionAvatarWrap {
   position: relative;
   margin-right: $spacing-md;
-  flex-shrink: 0;
-}
-
-.sessionAvatar {
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: $radius-round;
-  background: $color-bg-page;
 }
 
 .groupAvatar {
@@ -92,22 +153,27 @@
   font-size: 40rpx;
 }
 
+.sessionAvatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: $radius-md;
+  background: $color-border;
+}
+
 .unreadBadge {
   position: absolute;
   top: -8rpx;
   right: -8rpx;
   min-width: 36rpx;
   height: 36rpx;
+  line-height: 36rpx;
+  text-align: center;
   background: $color-error;
-  border-radius: $radius-round;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 10rpx;
-  font-size: $font-size-xs;
-  color: $color-text-white;
-  font-weight: $font-weight-medium;
-  border: 2rpx solid $color-bg-card;
+  color: #ffffff;
+  font-size: 20rpx;
+  border-radius: 18rpx;
+  padding: 0 8rpx;
+  z-index: 1;
 }
 
 .sessionContent {
@@ -117,17 +183,17 @@
 
 .sessionTop {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 8rpx;
 }
 
 .sessionTitle {
   font-size: $font-size-md;
-  font-weight: $font-weight-medium;
+  font-weight: $font-weight-semibold;
   color: $color-text-primary;
-  @include text-ellipsis;
   flex: 1;
+  @include text-ellipsis;
 }
 
 .sessionTime {
@@ -140,21 +206,13 @@
 .sessionBottom {
   display: flex;
   align-items: center;
-  justify-content: space-between;
 }
 
 .sessionLastMsg {
-  font-size: $font-size-sm;
+  font-size: $font-size-xs;
   color: $color-text-tertiary;
   @include text-ellipsis;
   flex: 1;
-}
-
-.sessionMute {
-  font-size: 24rpx;
-  color: $color-text-tertiary;
-  margin-left: $spacing-sm;
-  flex-shrink: 0;
 }
 
 .emptyState {
@@ -162,98 +220,36 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 160rpx 0;
+  padding: 120rpx $page-padding;
 }
 
 .emptyIcon {
-  font-size: 80rpx;
-  margin-bottom: $spacing-md;
-  opacity: 0.5;
+  font-size: 120rpx;
+  margin-bottom: $spacing-lg;
 }
 
 .emptyText {
   font-size: $font-size-md;
   color: $color-text-tertiary;
-  margin-bottom: $spacing-lg;
+  margin-bottom: $spacing-xl;
 }
 
 .emptyBtn {
   @include button-reset;
   padding: 0 $spacing-xl;
   height: $button-height-md;
-  background: $color-primary;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
   border-radius: $radius-button;
   color: $color-text-white;
   font-size: $font-size-md;
-
-  &:active {
-    opacity: 0.9;
-  }
+  font-weight: $font-weight-semibold;
 }
 
-.noticeSection {
-  background: $color-bg-card;
-  margin-bottom: $spacing-md;
-  padding: $spacing-md $page-padding;
-}
-
-.noticeItem {
-  display: flex;
-  align-items: center;
-  padding: $spacing-md 0;
-
-  &:active {
-    opacity: 0.7;
-  }
-}
-
-.noticeIcon {
-  width: 80rpx;
-  height: 80rpx;
-  border-radius: $radius-md;
-  background: rgba(255, 107, 53, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 36rpx;
-  margin-right: $spacing-md;
-}
-
-.noticeInfo {
-  flex: 1;
-}
-
-.noticeTitle {
-  font-size: $font-size-md;
-  color: $color-text-primary;
-  font-weight: $font-weight-medium;
-  margin-bottom: 4rpx;
-}
-
-.noticeDesc {
-  font-size: $font-size-xs;
-  color: $color-text-tertiary;
-  @include text-ellipsis;
-}
-
-.noticeBadge {
-  min-width: 32rpx;
-  height: 32rpx;
-  background: $color-error;
-  border-radius: $radius-round;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 8rpx;
-  font-size: 20rpx;
-  color: $color-text-white;
-  margin-left: $spacing-sm;
-}
-
+/* 聊天详情 */
 .chatDetailContainer {
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  height: 100vh;
   background: $color-bg-page;
 }
 
@@ -263,12 +259,20 @@
   padding: $spacing-md $page-padding;
   background: $color-bg-card;
   border-bottom: 1rpx solid $color-divider;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .backBtn {
-  font-size: 32rpx;
-  margin-right: $spacing-md;
+  font-size: 40rpx;
   color: $color-text-primary;
+  padding: $spacing-sm;
+  margin-right: $spacing-sm;
+
+  &:active {
+    opacity: 0.6;
+  }
 }
 
 .chatTitle {
@@ -276,12 +280,17 @@
   font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
   color: $color-text-primary;
-  @include text-ellipsis;
+  text-align: center;
 }
 
 .chatMore {
-  font-size: 32rpx;
-  color: $color-text-secondary;
+  font-size: 36rpx;
+  color: $color-text-primary;
+  padding: $spacing-sm;
+
+  &:active {
+    opacity: 0.6;
+  }
 }
 
 .chatMessages {
@@ -290,9 +299,17 @@
   overflow-y: auto;
 }
 
+.messageTime {
+  text-align: center;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  padding: $spacing-sm 0;
+}
+
 .messageItem {
   display: flex;
-  margin-bottom: $spacing-lg;
+  margin-bottom: $spacing-md;
+  align-items: flex-start;
 }
 
 .messageSelf {
@@ -300,115 +317,99 @@
 }
 
 .messageAvatar {
-  width: 64rpx;
-  height: 64rpx;
+  width: 72rpx;
+  height: 72rpx;
   border-radius: $radius-round;
-  margin: 0 $spacing-sm;
+  background: $color-border;
   flex-shrink: 0;
 }
 
 .messageBubble {
   max-width: 70%;
+  margin: 0 $spacing-sm;
   padding: $spacing-md;
-  border-radius: $radius-lg;
   background: $color-bg-card;
+  border-radius: 0 $radius-lg $radius-lg $radius-lg;
   position: relative;
+  box-shadow: $shadow-card;
 }
 
 .messageSelfBubble {
   background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-lg 0 $radius-lg $radius-lg;
   color: $color-text-white;
+
+  .senderName,
+  .voteSubtitle,
+  .voteTip,
+  .voteOptionCount {
+    color: rgba(255, 255, 255, 0.8) !important;
+  }
+
+  .messageText,
+  .voteTitle,
+  .voteOptionText {
+    color: $color-text-white !important;
+  }
+
+  .voteCard {
+    background: rgba(255, 255, 255, 0.15) !important;
+  }
+
+  .voteOptionBar {
+    background: rgba(255, 255, 255, 0.3) !important;
+  }
+
+  .voteOptionVoted {
+    background: rgba(255, 255, 255, 0.25) !important;
+  }
+}
+
+.senderName {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-bottom: 8rpx;
+  display: block;
+  font-weight: $font-weight-medium;
 }
 
 .messageText {
   font-size: $font-size-md;
+  color: $color-text-primary;
   line-height: 1.6;
   word-break: break-all;
 }
 
-.messageTime {
-  text-align: center;
-  font-size: $font-size-xs;
-  color: $color-text-tertiary;
-  margin: $spacing-md 0;
-}
-
 .messageSystem {
-  text-align: center;
+  display: flex;
+  justify-content: center;
   margin: $spacing-md 0;
 }
 
 .systemText {
-  display: inline-block;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  background: rgba(0, 0, 0, 0.06);
   padding: 8rpx 20rpx;
-  background: rgba(0, 0, 0, 0.1);
   border-radius: $radius-sm;
-  font-size: $font-size-xs;
-  color: $color-text-tertiary;
 }
 
-.voteCard {
-  background: $color-bg-card;
-  border-radius: $radius-md;
-  padding: $spacing-md;
-  margin-top: $spacing-sm;
-}
-
-.voteTitle {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
-  color: $color-text-primary;
-  margin-bottom: $spacing-md;
-}
-
-.voteOption {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $spacing-sm 0;
-  border-bottom: 1rpx solid $color-divider;
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  &:active {
-    opacity: 0.7;
-  }
-}
-
-.voteOptionText {
-  font-size: $font-size-sm;
-  color: $color-text-secondary;
-}
-
-.voteOptionCount {
-  font-size: $font-size-xs;
-  color: $color-text-tertiary;
-}
-
+/* 位置卡片 */
 .locationCard {
-  background: $color-bg-card;
-  border-radius: $radius-md;
-  padding: $spacing-md;
-  margin-top: $spacing-sm;
   display: flex;
   align-items: center;
-
-  &:active {
-    opacity: 0.9;
-  }
+  min-width: 300rpx;
 }
 
 .locationIcon {
-  width: 56rpx;
-  height: 56rpx;
-  border-radius: $radius-sm;
-  background: rgba(255, 107, 53, 0.1);
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-md;
+  background: rgba(255, 107, 53, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28rpx;
+  font-size: 32rpx;
   margin-right: $spacing-sm;
 }
 
@@ -420,31 +421,141 @@
   font-size: $font-size-sm;
   color: $color-text-primary;
   font-weight: $font-weight-medium;
-  margin-bottom: 4rpx;
+  margin-bottom: 6rpx;
+  display: block;
 }
 
 .locationAddr {
   font-size: $font-size-xs;
   color: $color-text-tertiary;
   @include text-ellipsis;
+  display: block;
 }
 
+/* 投票卡片 */
+.voteCard {
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  min-width: 380rpx;
+}
+
+.voteCardHeader {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: $spacing-md;
+}
+
+.voteTitleIcon {
+  font-size: 36rpx;
+  margin-right: $spacing-sm;
+}
+
+.voteTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+  display: block;
+}
+
+.voteSubtitle {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  display: block;
+}
+
+.voteOptions {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-sm;
+}
+
+.voteOption {
+  position: relative;
+  border-radius: $radius-sm;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.04);
+  transition: all $transition-fast;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.voteOptionVoted {
+  background: rgba(255, 107, 53, 0.15);
+}
+
+.voteOptionProgress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.voteOptionBar {
+  height: 100%;
+  background: rgba(255, 107, 53, 0.2);
+  transition: width $transition-base ease-out;
+  border-radius: $radius-sm;
+}
+
+.voteOptionContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-sm $spacing-md;
+}
+
+.voteOptionText {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  flex: 1;
+}
+
+.voteOptionTextVoted {
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.voteOptionCount {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-left: $spacing-sm;
+  flex-shrink: 0;
+}
+
+.voteTip {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  text-align: center;
+  margin-top: $spacing-sm;
+}
+
+/* 输入栏 */
 .chatInputBar {
   display: flex;
   align-items: center;
-  padding: $spacing-md $page-padding;
-  padding-bottom: calc(#{$spacing-md} + env(safe-area-inset-bottom));
+  padding: $spacing-sm $page-padding;
   background: $color-bg-card;
   border-top: 1rpx solid $color-divider;
+  gap: $spacing-sm;
 }
 
 .inputTool {
-  font-size: 36rpx;
-  margin: 0 $spacing-sm;
-  color: $color-text-secondary;
+  font-size: 40rpx;
+  padding: $spacing-sm;
 
   &:active {
-    opacity: 0.7;
+    opacity: 0.6;
+    transform: scale(0.9);
   }
 }
 
@@ -453,35 +564,261 @@
   background: $color-bg-page;
   border-radius: $radius-button;
   padding: 0 $spacing-md;
-  height: 72rpx;
+  height: $button-height-md;
   display: flex;
   align-items: center;
-  margin: 0 $spacing-sm;
 }
 
 .chatInput {
   flex: 1;
-  font-size: $font-size-md;
+  font-size: $font-size-sm;
   color: $color-text-primary;
-  background: transparent;
-  border: none;
-  outline: none;
 }
 
 .sendBtn {
   @include button-reset;
+  height: $button-height-md;
   padding: 0 $spacing-lg;
-  height: 64rpx;
-  background: $color-primary;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
   border-radius: $radius-button;
   color: $color-text-white;
   font-size: $font-size-sm;
-
-  &:active {
-    opacity: 0.9;
-  }
+  font-weight: $font-weight-semibold;
 
   &:disabled {
     opacity: 0.5;
+  }
+
+  &:active:not(:disabled) {
+    opacity: 0.8;
+  }
+}
+
+/* 投票弹窗 */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: $page-padding;
+}
+
+.pollModal {
+  width: 100%;
+  max-width: 600rpx;
+  max-height: 80vh;
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pollModalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md $spacing-lg;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.pollModalTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.pollModalClose {
+  font-size: 36rpx;
+  color: $color-text-tertiary;
+  padding: $spacing-xs;
+
+  &:active {
+    opacity: 0.6;
+  }
+}
+
+.pollModalContent {
+  flex: 1;
+  padding: $spacing-lg;
+  overflow-y: auto;
+}
+
+.pollFormItem {
+  margin-bottom: $spacing-lg;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.pollFormLabel {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  margin-bottom: $spacing-sm;
+  display: block;
+}
+
+.pollFormLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+}
+
+.pollFormHint {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.pollFormInput {
+  width: 100%;
+  height: $button-height-md;
+  padding: 0 $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  border: 2rpx solid $color-border;
+  transition: border-color $transition-fast;
+
+  &:focus {
+    border-color: $color-primary;
+  }
+}
+
+.pollOptionRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-sm;
+}
+
+.pollOptionIndex {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: $radius-round;
+  background: $color-bg-page;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  flex-shrink: 0;
+}
+
+.pollOptionInput {
+  flex: 1;
+  height: 72rpx;
+  padding: 0 $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  border: 2rpx solid $color-border;
+}
+
+.pollOptionRemove {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: $radius-round;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  color: $color-text-tertiary;
+  flex-shrink: 0;
+
+  &:active {
+    background: $color-bg-page;
+  }
+}
+
+.pollOptionRemoveDisabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.pollAddRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-top: $spacing-sm;
+}
+
+.pollAddInputWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  padding: 0 $spacing-sm;
+  height: 72rpx;
+  border: 2rpx dashed $color-border;
+}
+
+.pollAddInput {
+  flex: 1;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  background: transparent;
+}
+
+.pollAddBtn {
+  @include button-reset;
+  height: 72rpx;
+  padding: 0 $spacing-md;
+  background: rgba(255, 107, 53, 0.1);
+  border-radius: $radius-md;
+  color: $color-primary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.pollModalFooter {
+  display: flex;
+  gap: $spacing-md;
+  padding: $spacing-md $spacing-lg $spacing-lg;
+  border-top: 1rpx solid $color-divider;
+}
+
+.pollCancelBtn {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-md;
+  background: $color-bg-page;
+  border-radius: $radius-button;
+  color: $color-text-secondary;
+  font-size: $font-size-md;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.pollSendBtn {
+  @include button-reset;
+  flex: 1.5;
+  height: $button-height-md;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-button;
+  color: $color-text-white;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+
+  &:active {
+    opacity: 0.9;
   }
 }

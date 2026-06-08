@@ -60,6 +60,15 @@
   border-radius: 4rpx;
 }
 
+.routeLine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
 .mapMarker {
   position: absolute;
   display: flex;
@@ -67,30 +76,35 @@
   align-items: center;
   transform: translate(-50%, -100%);
   transition: all $transition-base;
+  z-index: 5;
 
   &:active {
     transform: translate(-50%, -100%) scale(1.1);
   }
 }
 
+.mapMarkerActive {
+  z-index: 10;
+}
+
 .markerPin {
   width: 64rpx;
   height: 64rpx;
   border-radius: $radius-round;
-  background: $color-primary;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4rpx 12rpx rgba(255, 107, 53, 0.4);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.2);
   border: 4rpx solid #ffffff;
   font-size: 28rpx;
+  transition: all $transition-base;
 }
 
 .markerPinActive {
   width: 80rpx;
   height: 80rpx;
   font-size: 36rpx;
-  box-shadow: 0 6rpx 20rpx rgba(255, 107, 53, 0.5);
+  box-shadow: 0 6rpx 20rpx rgba(0, 0, 0, 0.25);
 }
 
 .markerLabel {
@@ -102,13 +116,15 @@
   color: $color-text-primary;
   white-space: nowrap;
   box-shadow: $shadow-card;
-  max-width: 200rpx;
+  max-width: 220rpx;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: $font-weight-medium;
 }
 
 .markerLabelActive {
-  font-weight: $font-weight-semibold;
+  font-weight: $font-weight-bold;
+  background: $color-bg-card;
 }
 
 .myLocation {
@@ -190,11 +206,11 @@
   color: $color-text-tertiary;
 }
 
-.activityPanel {
+.routeDetailPanel {
   background: $color-bg-card;
   border-radius: 24rpx 24rpx 0 0;
-  padding: $spacing-lg $page-padding;
-  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.08);
+  padding: $spacing-md $page-padding $spacing-lg;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
   margin-top: -24rpx;
   position: relative;
   z-index: 5;
@@ -206,6 +222,181 @@
   background: $color-border;
   border-radius: 4rpx;
   margin: 0 auto $spacing-md;
+}
+
+.routeDetailHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+}
+
+.routeTypeIcon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  flex-shrink: 0;
+}
+
+.routeTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: 6rpx;
+  @include text-ellipsis;
+}
+
+.routeSubtitle {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.routeInfoCard {
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.08) 0%, rgba(255, 140, 90, 0.08) 100%);
+  border-radius: $radius-md;
+  padding: $spacing-md 0;
+  margin-bottom: $spacing-md;
+}
+
+.routeInfoItem {
+  flex: 1;
+  text-align: center;
+}
+
+.routeInfoValue {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+  line-height: 1.2;
+  margin-bottom: 6rpx;
+}
+
+.routeInfoLabel {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.routeDivider {
+  width: 1rpx;
+  height: 64rpx;
+  background: rgba(255, 107, 53, 0.2);
+}
+
+.noRouteHint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: $spacing-lg 0;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-md;
+}
+
+.noRouteIcon {
+  font-size: 56rpx;
+  margin-bottom: $spacing-sm;
+}
+
+.noRouteText {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  margin-bottom: 4rpx;
+}
+
+.noRouteDesc {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.locationRow {
+  display: flex;
+  align-items: center;
+  padding: $spacing-md 0;
+  border-top: 1rpx solid $color-divider;
+  border-bottom: 1rpx solid $color-divider;
+  margin-bottom: $spacing-md;
+}
+
+.locationIconText {
+  font-size: 32rpx;
+  margin-right: $spacing-sm;
+}
+
+.locationName {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  margin-bottom: 4rpx;
+  display: block;
+}
+
+.locationAddress {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  @include text-ellipsis;
+  display: block;
+}
+
+.locationDistance {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+  margin-left: $spacing-md;
+  flex-shrink: 0;
+}
+
+.routeDetailFooter {
+  display: flex;
+  gap: $spacing-md;
+  padding-top: $spacing-sm;
+}
+
+.secondaryBtn {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-md;
+  background: $color-bg-page;
+  border-radius: $radius-button;
+  color: $color-text-secondary;
+  font-size: $font-size-md;
+  border: 2rpx solid $color-border;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.primaryBtn {
+  @include button-reset;
+  flex: 2;
+  height: $button-height-md;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-button;
+  color: $color-text-white;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.activityPanel {
+  background: $color-bg-card;
+  border-radius: 24rpx 24rpx 0 0;
+  padding: $spacing-md $page-padding $spacing-lg;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.08);
+  margin-top: -24rpx;
+  position: relative;
+  z-index: 5;
 }
 
 .panelHeader {
@@ -229,7 +420,7 @@
 .activityList {
   display: flex;
   flex-direction: column;
-  gap: $spacing-md;
+  gap: $spacing-sm;
 }
 
 .miniCard {
@@ -288,6 +479,7 @@
   border-radius: $radius-xs;
   font-size: $font-size-xs;
   font-weight: $font-weight-medium;
+  flex-shrink: 0;
 }
 
 .miniStatusRecruiting {

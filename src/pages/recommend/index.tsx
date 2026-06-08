@@ -1,23 +1,31 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, Input, ScrollView } from '@tarojs/components';
 import Taro from '@tarojs/taro';
+import { useDidShow } from '@tarojs/taro';
 import classNames from 'classnames';
 import styles from './index.module.scss';
 import ActivityCard from '@/components/ActivityCard';
-import { mockActivities, sportTypeConfigs, skillLevelConfigs } from '@/data/mockData';
-import type { SportType, SkillLevel, Activity } from '@/types';
+import { sportTypeConfigs, skillLevelConfigs } from '@/data/mockData';
+import type { SportType, SkillLevel } from '@/types';
+import { useAppStore } from '@/store/useAppStore';
 
 type SortType = 'distance' | 'time' | 'hot';
 
 const RecommendPage: React.FC = () => {
+  const activities = useAppStore(state => state.activities);
+
   const [searchText, setSearchText] = useState('');
   const [selectedTypes, setSelectedTypes] = useState<SportType[]>([]);
   const [selectedLevels, setSelectedLevels] = useState<SkillLevel[]>([]);
-  const [distance, setDistance] = useState(10);
+  const [distance, setDistance] = useState(50);
   const [sortBy, setSortBy] = useState<SortType>('distance');
 
+  useDidShow(() => {
+    console.log('[Recommend] 页面显示，活动数:', activities.length);
+  });
+
   const filteredActivities = useMemo(() => {
-    let result = [...mockActivities];
+    let result = [...activities];
 
     if (searchText) {
       result = result.filter(
@@ -51,7 +59,7 @@ const RecommendPage: React.FC = () => {
     }
 
     return result;
-  }, [searchText, selectedTypes, selectedLevels, distance, sortBy]);
+  }, [activities, searchText, selectedTypes, selectedLevels, distance, sortBy]);
 
   const toggleType = (type: SportType) => {
     setSelectedTypes(prev =>
@@ -69,13 +77,22 @@ const RecommendPage: React.FC = () => {
     Taro.showLoading({ title: '刷新中...' });
     setTimeout(() => {
       Taro.hideLoading();
-      Taro.stopPullDownRefresh();
-    }, 1000);
+      if (typeof Taro.stopPullDownRefresh === 'function') {
+        Taro.stopPullDownRefresh();
+      }
+    }, 800);
   };
 
-  const handleLoadMore = () => {
-    console.log('[Recommend] 加载更多');
-  };
+  useEffect(() => {
+    if (typeof Taro.onPullDownRefresh === 'function') {
+      Taro.onPullDownRefresh(handleRefresh);
+      return () => {
+        if (typeof Taro.offPullDownRefresh === 'function') {
+          Taro.offPullDownRefresh(handleRefresh);
+        }
+      };
+    }
+  }, []);
 
   return (
     <View className={styles.pageContainer}>
@@ -123,22 +140,20 @@ const RecommendPage: React.FC = () => {
           </View>
 
           <View className={styles.filterRow}>
-            <View className={styles.filterGroup} style={{ flex: 1 }}>
-              <Text className={styles.filterGroupTitle}>水平</Text>
-              <View className={styles.levelChips}>
-                {skillLevelConfigs.map(level => (
-                  <View
-                    key={level.key}
-                    className={classNames(
-                      styles.levelChip,
-                      selectedLevels.includes(level.key) && styles.levelChipActive
-                    )}
-                    onClick={() => toggleLevel(level.key)}
-                  >
-                    {level.label}
-                  </View>
-                ))}
-              </View>
+            <Text className={styles.filterGroupTitle}>水平</Text>
+            <View className={styles.levelChips}>
+              {skillLevelConfigs.map(level => (
+                <View
+                  key={level.key}
+                  className={classNames(
+                    styles.levelChip,
+                    selectedLevels.includes(level.key) && styles.levelChipActive
+                  )}
+                  onClick={() => toggleLevel(level.key)}
+                >
+                  {level.label}
+                </View>
+              ))}
             </View>
           </View>
 
@@ -165,9 +180,8 @@ const RecommendPage: React.FC = () => {
       <ScrollView
         className={styles.listSection}
         scrollY
-        onScrollToLower={handleLoadMore}
         lowerThreshold={50}
-        style={{ height: 'calc(100vh - 380rpx)' }}
+        style={{ height: 'calc(100vh - 420rpx)' }}
       >
         <View className={styles.sectionHeader}>
           <Text className={styles.sectionTitle}>附近活动 ({filteredActivities.length})</Text>
@@ -210,12 +224,15 @@ const RecommendPage: React.FC = () => {
           <View className={styles.emptyState}>
             <Text className={styles.emptyIcon}>🏃‍♂️</Text>
             <Text className={styles.emptyText}>暂无符合条件的活动</Text>
+            <Text style={{ fontSize: 24, color: '#86909C', marginTop: 8 }}>
+              去发布页创建第一个活动吧
+            </Text>
           </View>
         )}
 
         {filteredActivities.length > 0 && (
           <View className={styles.loadingMore}>
-            <Text>没有更多了</Text>
+            <Text>共 {filteredActivities.length} 个活动</Text>
           </View>
         )}
       </ScrollView>

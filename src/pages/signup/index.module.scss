@@ -294,6 +294,32 @@
   color: $color-text-primary;
 }
 
+.myWaitlistItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md;
+  background: linear-gradient(135deg, rgba(255, 125, 0, 0.1) 0%, rgba(255, 107, 53, 0.1) 100%);
+  border-radius: $radius-md;
+  margin-bottom: $spacing-sm;
+  border: 2rpx solid rgba(255, 125, 0, 0.3);
+}
+
+.myWaitlistBadge {
+  padding: 6rpx 16rpx;
+  background: $color-warning;
+  color: $color-text-white;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+}
+
+.myWaitlistRank {
+  font-size: $font-size-md;
+  color: $color-warning;
+  font-weight: $font-weight-semibold;
+}
+
 .footer {
   position: fixed;
   bottom: 0;
@@ -356,6 +382,27 @@
   &:active {
     opacity: 0.9;
     transform: scale(0.98);
+  }
+}
+
+.signInBtnDone {
+  background: $color-bg-page !important;
+  color: $color-success !important;
+  border: 2rpx solid $color-success;
+}
+
+.cancelBtn {
+  @include button-reset;
+  flex: 2;
+  height: $button-height-lg;
+  background: $color-bg-page;
+  border-radius: $radius-button;
+  color: $color-text-secondary;
+  font-size: $font-size-lg;
+  border: 2rpx solid $color-border;
+
+  &:active {
+    opacity: 0.8;
   }
 }
 

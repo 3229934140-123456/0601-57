@@ -15,9 +15,11 @@ const ChatPage: React.FC = () => {
   const chatSessions = useAppStore(state => state.chatSessions);
   const chatMessages = useAppStore(state => state.chatMessages);
   const activities = useAppStore(state => state.activities);
+  const targetActivityChatId = useAppStore(state => state.targetActivityChatId);
   const addChatMessage = useAppStore(state => state.addChatMessage);
   const vote = useAppStore(state => state.vote);
   const adoptVoteTime = useAppStore(state => state.adoptVoteTime);
+  const setTargetActivityChat = useAppStore(state => state.setTargetActivityChat);
 
   const [activeTab, setActiveTab] = useState<TabType>('activity');
   const [selectedSession, setSelectedSession] = useState<ChatSession | null>(null);
@@ -28,15 +30,19 @@ const ChatPage: React.FC = () => {
   const [newOptionText, setNewOptionText] = useState('');
 
   useEffect(() => {
-    const activityId = router.params.activityId;
+    const activityId = router.params.activityId || targetActivityChatId;
     if (activityId) {
       const session = chatSessions.find(s => s.activityId === activityId);
       if (session) {
         setSelectedSession(session);
+        setActiveTab('activity');
         Taro.setNavigationBarTitle({ title: session.title });
+        if (targetActivityChatId) {
+          setTargetActivityChat(null);
+        }
       }
     }
-  }, [router.params.activityId, chatSessions]);
+  }, [router.params.activityId, targetActivityChatId, chatSessions, setTargetActivityChat]);
 
   const messages = useMemo(() => {
     if (!selectedSession) return [];

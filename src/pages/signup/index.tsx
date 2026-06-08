@@ -25,6 +25,7 @@ const SignupPage: React.FC = () => {
   const cancelWaitlist = useAppStore(state => state.cancelWaitlist);
   const checkIn = useAppStore(state => state.checkIn);
   const payAA = useAppStore(state => state.payAA);
+  const setTargetActivityChat = useAppStore(state => state.setTargetActivityChat);
 
   const activity = useMemo<Activity | undefined>(() => {
     return activities.find(a => a.id === activityId);
@@ -36,7 +37,7 @@ const SignupPage: React.FC = () => {
   const isJoined = joinedActivities.includes(activityId);
   const isWaitlist = waitlistActivities.includes(activityId);
   const isCheckedIn = checkedInActivities.includes(activityId);
-  const isPaid = paidActivities.includes(activityId);
+  const isPaid = activity ? (activity.paidUserIds || []).includes(currentUser.id) : false;
 
   const sportConfig = activity ? sportTypeConfigs.find(s => s.key === activity.sportType) : null;
   const levelConfig = activity ? skillLevelConfigs.find(l => l.key === activity.skillLevel) : null;
@@ -129,9 +130,8 @@ const SignupPage: React.FC = () => {
 
   const handleChat = () => {
     console.log('[Signup] 进入活动群聊');
-    if (activity?.groupChatId) {
-      Taro.navigateTo({ url: `/pages/chat/index?activityId=${activity.id}` });
-    } else {
+    if (activity) {
+      setTargetActivityChat(activity.id);
       Taro.switchTab({ url: '/pages/chat/index' });
     }
   };
@@ -204,13 +204,14 @@ const SignupPage: React.FC = () => {
   };
 
   const getWaitlistCount = () => {
-    return activity.waitlistCount || 0;
+    return activity.waitlistUsers?.length || 0;
   };
 
   const getMyWaitlistRank = () => {
     if (!isWaitlist) return 0;
-    const myIndex = waitlistActivities.indexOf(activityId);
-    return myIndex >= 0 ? myIndex + 1 : getWaitlistCount();
+    const waitlistUsers = activity.waitlistUsers || [];
+    const myIndex = waitlistUsers.findIndex(u => u.id === currentUser.id);
+    return myIndex >= 0 ? myIndex + 1 : waitlistUsers.length + 1;
   };
 
   const getCheckInTime = () => {
@@ -443,11 +444,11 @@ const SignupPage: React.FC = () => {
         <View className={styles.participantsHeader}>
           <Text className={styles.sectionTitle}>参与成员</Text>
           <View className={styles.participantsCount}>
-            <strong>{activity.currentParticipants}</strong>/{activity.maxParticipants}人
+            <strong>{activity.participants?.length || 0}</strong>/{activity.maxParticipants}人
           </View>
         </View>
         <View className={styles.participantList}>
-          {activity.participants?.slice(0, 8).map(user => {
+          {(activity.participants || []).slice(0, 8).map(user => {
             const isMe = user.id === currentUser.id;
             return (
               <View key={user.id} className={styles.participantItem}>
@@ -469,7 +470,7 @@ const SignupPage: React.FC = () => {
               </View>
             );
           })}
-          {activity.currentParticipants > 8 && (
+          {(activity.participants?.length || 0) > 8 && (
             <View className={styles.participantItem}>
               <View
                 style={{
@@ -485,7 +486,7 @@ const SignupPage: React.FC = () => {
                   color: '#86909C',
                 }}
               >
-                +{activity.currentParticipants - 8}
+                +{(activity.participants?.length || 0) - 8}
               </View>
             </View>
           )}
@@ -505,7 +506,7 @@ const SignupPage: React.FC = () => {
             </View>
           )}
           <View className={styles.waitlistList}>
-            {activity.waitlistUsers?.map((user, idx) => {
+            {(activity.waitlistUsers || []).filter(u => u && u.id).map((user, idx) => {
               const isMe = user.id === currentUser.id;
               return (
                 <View key={user.id} className={styles.waitlistItem}>
@@ -548,12 +549,12 @@ const SignupPage: React.FC = () => {
           </View>
           <View className={styles.aaSummary}>
             <Text className={styles.aaPaidCount}>
-              已付 {activity.paidUserIds?.length || 0}/{activity.currentParticipants} 人
+              已付 {activity.paidUserIds?.length || 0}/{activity.participants?.length || 0} 人
             </Text>
           </View>
           <View className={styles.aaList}>
-            {activity.participants?.map(user => {
-              const hasPaid = activity.paidUserIds?.includes(user.id) || false;
+            {(activity.participants || []).filter(u => u && u.id).map(user => {
+              const hasPaid = (activity.paidUserIds || []).includes(user.id);
               const isMe = user.id === currentUser.id;
               return (
                 <View key={user.id} className={styles.aaItem}>
@@ -652,12 +653,12 @@ const SignupPage: React.FC = () => {
               <View className={styles.adminSection}>
                 <View className={styles.adminSectionHeader}>
                   <Text className={styles.adminSectionTitle}>报名成员</Text>
-                  <Text className={styles.adminSectionCount}>{activity.currentParticipants}/{activity.maxParticipants}人</Text>
+                  <Text className={styles.adminSectionCount}>{activity.participants?.length || 0}/{activity.maxParticipants}人</Text>
                 </View>
                 <View className={styles.adminUserList}>
-                  {activity.participants?.map(user => {
+                  {(activity.participants || []).filter(u => u && u.id).map(user => {
                     const hasCheckedIn = activity.checkInTimes?.[user.id];
-                    const hasPaid = activity.paidUserIds?.includes(user.id);
+                    const hasPaid = (activity.paidUserIds || []).includes(user.id);
                     return (
                       <View key={user.id} className={styles.adminUserItem}>
                         <Image
@@ -692,14 +693,14 @@ const SignupPage: React.FC = () => {
                 </View>
               </View>
 
-              {activity.waitlistUsers && activity.waitlistUsers.length > 0 && (
+              {activity.waitlistUsers && activity.waitlistUsers.filter(u => u && u.id).length > 0 && (
                 <View className={styles.adminSection}>
                   <View className={styles.adminSectionHeader}>
                     <Text className={styles.adminSectionTitle}>候补名单</Text>
-                    <Text className={styles.adminSectionCount}>{activity.waitlistUsers.length}人</Text>
+                    <Text className={styles.adminSectionCount}>{activity.waitlistUsers.filter(u => u && u.id).length}人</Text>
                   </View>
                   <View className={styles.adminUserList}>
-                    {activity.waitlistUsers.map((user, idx) => (
+                    {activity.waitlistUsers.filter(u => u && u.id).map((user, idx) => (
                       <View key={user.id} className={styles.adminUserItem}>
                         <View className={styles.adminWaitlistRank}>{idx + 1}</View>
                         <Image
@@ -726,7 +727,7 @@ const SignupPage: React.FC = () => {
                     <Text className={styles.adminStatLabel}>已签到</Text>
                   </View>
                   <View className={styles.adminStatItem}>
-                    <Text className={styles.adminStatNum}>{activity.currentParticipants - Object.keys(activity.checkInTimes || {}).length}</Text>
+                    <Text className={styles.adminStatNum}>{Math.max(0, (activity.participants?.length || 0) - Object.keys(activity.checkInTimes || {}).length)}</Text>
                     <Text className={styles.adminStatLabel}>未签到</Text>
                   </View>
                 </View>
@@ -747,7 +748,7 @@ const SignupPage: React.FC = () => {
                       <Text className={styles.adminStatLabel}>已收金额</Text>
                     </View>
                     <View className={styles.adminStatItem}>
-                      <Text className={styles.adminStatNum}>¥{(activity.currentParticipants * activity.fee) - ((activity.paidUserIds?.length || 0) * activity.fee)}</Text>
+                      <Text className={styles.adminStatNum}>¥{Math.max(0, ((activity.participants?.length || 0) * activity.fee) - ((activity.paidUserIds?.length || 0) * activity.fee))}</Text>
                       <Text className={styles.adminStatLabel}>待收金额</Text>
                     </View>
                   </View>

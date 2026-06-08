@@ -26,6 +26,7 @@ interface AppState {
   checkedInActivities: string[];
   paidActivities: string[];
   publishedActivities: string[];
+  targetActivityChatId: string | null;
 
   addActivity: (activity: Activity) => void;
   updateActivity: (activityId: string, updates: Partial<Activity>) => void;
@@ -43,6 +44,7 @@ interface AppState {
   updateSettings: (settings: Partial<AppSettings>) => void;
   updateUserProfile: (user: Partial<User>) => void;
   adoptVoteTime: (activityId: string, sessionId: string, messageId: string, optionIndex: number, newDateTime: string) => void;
+  setTargetActivityChat: (activityId: string | null) => void;
 }
 
 const initialActivities = mockActivities.map(a => ({ ...a }));
@@ -51,6 +53,92 @@ const initialChatMessages: Record<string, ChatMessage[]> = {
   c1: [...mockChatMessages],
   c2: mockChatMessages.slice(0, 3),
   c3: mockChatMessages.slice(0, 2),
+  c4: [
+    {
+      id: 'm_c4_1',
+      sessionId: 'c4',
+      senderId: 'system',
+      senderName: '系统',
+      type: 'system',
+      content: '🎉 「周末篮球3v3，找人组队」活动群已创建',
+      timestamp: '2026-06-03 20:00:00',
+    },
+    {
+      id: 'm_c4_2',
+      sessionId: 'c4',
+      senderId: 'u5',
+      senderName: '篮球少年',
+      senderAvatar: 'https://picsum.photos/id/1027/200/200',
+      type: 'text',
+      content: '周日见，记得穿球鞋',
+      timestamp: '2026-06-07 10:00:00',
+    },
+  ],
+  c5: [
+    {
+      id: 'm_c5_1',
+      sessionId: 'c5',
+      senderId: 'system',
+      senderName: '系统',
+      type: 'system',
+      content: '🎉 「瑜伽体验课 - 减压放松」活动群已创建',
+      timestamp: '2026-06-05 11:00:00',
+    },
+    {
+      id: 'm_c5_2',
+      sessionId: 'c5',
+      senderId: 'u6',
+      senderName: '瑜伽小姐姐',
+      senderAvatar: 'https://picsum.photos/id/1025/200/200',
+      type: 'text',
+      content: '周六上午10点见~',
+      timestamp: '2026-06-06 16:00:00',
+    },
+  ],
+  c6: [
+    {
+      id: 'm_c6_1',
+      sessionId: 'c6',
+      senderId: 'system',
+      senderName: '系统',
+      type: 'system',
+      content: '🎉 「晨跑打卡 - 朝阳公园」活动群已创建',
+      timestamp: '2026-06-02 08:00:00',
+    },
+    {
+      id: 'm_c6_2',
+      sessionId: 'c6',
+      senderId: 'u1',
+      senderName: '运动达人小李',
+      senderAvatar: 'https://picsum.photos/id/64/200/200',
+      type: 'text',
+      content: '明天早上6点半集合',
+      timestamp: '2026-06-07 21:00:00',
+    },
+  ],
+  c7: [
+    {
+      id: 'm_c7_1',
+      sessionId: 'c7',
+      senderId: 'system',
+      senderName: '系统',
+      type: 'system',
+      content: '🎉 「室内游泳 - 找搭子」活动群已创建',
+      timestamp: '2026-06-04 16:00:00',
+    },
+    {
+      id: 'm_c7_2',
+      sessionId: 'c7',
+      senderId: 'u2',
+      senderName: '跑步女神Amy',
+      senderAvatar: 'https://picsum.photos/id/91/200/200',
+      type: 'text',
+      content: '这周六一起去吗？',
+      timestamp: '2026-06-05 14:00:00',
+    },
+  ],
+  p1: mockChatMessages.slice(0, 2),
+  p2: mockChatMessages.slice(0, 1),
 };
 
 const defaultEquipment: EquipmentItem[] = [
@@ -85,6 +173,7 @@ export const useAppStore = create<AppState>()(
       checkedInActivities: [],
       paidActivities: [],
       publishedActivities: ['a6'],
+      targetActivityChatId: null,
 
       addActivity: (activity) => {
         const groupChatId = `gc_${activity.id}`;
@@ -482,6 +571,11 @@ export const useAppStore = create<AppState>()(
           };
         });
         console.log('[Store] 投票时间已采用:', activityId, newDateTime);
+      },
+
+      setTargetActivityChat: (activityId) => {
+        set({ targetActivityChatId: activityId });
+        console.log('[Store] 设置目标活动群聊:', activityId);
       },
     }),
     {

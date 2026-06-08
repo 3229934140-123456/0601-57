@@ -23,6 +23,7 @@ const MyActivitiesPage: React.FC = () => {
   const cancelWaitlist = useAppStore(state => state.cancelWaitlist);
   const checkIn = useAppStore(state => state.checkIn);
   const payAA = useAppStore(state => state.payAA);
+  const setTargetActivityChat = useAppStore(state => state.setTargetActivityChat);
 
   const [activeTab, setActiveTab] = useState<TabType>('joined');
 
@@ -121,9 +122,8 @@ const MyActivitiesPage: React.FC = () => {
 
   const handleChat = (e: any, activity?: Activity) => {
     e.stopPropagation();
-    if (activity?.groupChatId) {
-      Taro.navigateTo({ url: `/pages/chat/index?activityId=${activity.id}` });
-    } else {
+    if (activity) {
+      setTargetActivityChat(activity.id);
       Taro.switchTab({ url: '/pages/chat/index' });
     }
   };
@@ -161,7 +161,7 @@ const MyActivitiesPage: React.FC = () => {
     const levelConfig = getLevelConfig(activity.skillLevel);
     const isOngoingNow = isOngoing(activity);
     const checked = isCheckedIn(activity.id);
-    const isPaid = paidActivities.includes(activity.id);
+    const isPaid = (activity.paidUserIds || []).includes(currentUser.id);
     const needPay = activity.feeType === 'aa' && activity.fee > 0 && !isPaid;
 
     return (

@@ -26,17 +26,19 @@ interface AppState {
   publishedActivities: string[];
 
   addActivity: (activity: Activity) => void;
+  updateActivity: (activityId: string, updates: Partial<Activity>) => void;
   joinActivity: (activityId: string) => void;
   cancelJoin: (activityId: string) => void;
   joinWaitlist: (activityId: string) => void;
   cancelWaitlist: (activityId: string) => void;
-  checkIn: (activityId: string) => void;
+  checkIn: (activityId: string, userId: string) => void;
   addChatMessage: (sessionId: string, message: ChatMessage) => void;
   vote: (sessionId: string, messageId: string, optionIndex: number, userId: string) => void;
   setEquipmentPreferences: (items: EquipmentItem[]) => void;
   setFavoriteVenues: (venues: Venue[]) => void;
   updateSettings: (settings: Partial<AppSettings>) => void;
   updateUserProfile: (user: Partial<User>) => void;
+  adoptVoteTime: (activityId: string, sessionId: string, messageId: string, optionIndex: number, newTime: string) => void;
 }
 
 const initialActivities = mockActivities.map(a => ({ ...a }));
@@ -83,6 +85,15 @@ export const useAppStore = create<AppState>()(
           publishedActivities: [activity.id, ...state.publishedActivities],
         }));
         console.log('[Store] 活动已添加:', activity.title);
+      },
+
+      updateActivity: (activityId, updates) => {
+        set(state => ({
+          activities: state.activities.map(a =>
+            a.id === activityId ? { ...a, ...updates } : a
+          ),
+        }));
+        console.log('[Store] 活动已更新:', activityId);
       },
 
       joinActivity: (activityId) => {
@@ -150,12 +161,25 @@ export const useAppStore = create<AppState>()(
         console.log('[Store] 取消候补:', activityId);
       },
 
-      checkIn: (activityId) => {
+      checkIn: (activityId, userId) => {
         set(state => {
           if (state.checkedInActivities.includes(activityId)) {
             return {};
           }
+          const activities = state.activities.map(a => {
+            if (a.id === activityId) {
+              return {
+                ...a,
+                checkInTimes: {
+                  ...(a.checkInTimes || {}),
+                  [userId]: new Date().toISOString(),
+                },
+              };
+            }
+            return a;
+          });
           return {
+            activities,
             checkedInActivities: [...state.checkedInActivities, activityId],
           };
         });
@@ -237,6 +261,52 @@ export const useAppStore = create<AppState>()(
           currentUser: { ...state.currentUser, ...user },
         }));
         console.log('[Store] 更新用户资料');
+      },
+
+      adoptVoteTime: (activityId, sessionId, messageId, optionIndex, newTime) => {
+        set(state => {
+          const activity = state.activities.find(a => a.id === activityId);
+          if (!activity) return {};
+
+          const startDate = activity.startTime.split(' ')[0];
+          const newStartTime = `${startDate} ${newTime}:00`;
+          
+          const startMs = new Date(activity.startTime).getTime();
+          const endMs = new Date(activity.endTime).getTime();
+          const durationMs = endMs - startMs;
+          const newStartMs = new Date(newStartTime).getTime();
+          const newEndMs = newStartMs + durationMs;
+          const newEndTime = new Date(newEndMs).toISOString().replace('T', ' ').slice(0, 19);
+
+          const activities = state.activities.map(a =>
+            a.id === activityId
+              ? { ...a, startTime: newStartTime, endTime: newEndTime }
+              : a
+          );
+
+          const sessionMessages = state.chatMessages[sessionId] || [];
+          const voteMsg = sessionMessages.find(m => m.id === messageId);
+          const optionText = voteMsg?.voteData?.options[optionIndex] || newTime;
+
+          const systemMessage: ChatMessage = {
+            id: `sys_${Date.now()}`,
+            sessionId,
+            senderId: 'system',
+            senderName: '系统',
+            type: 'system',
+            content: `📢 投票结果已采用：${optionText}\n活动时间已更新`,
+            timestamp: new Date().toISOString(),
+          };
+
+          return {
+            activities,
+            chatMessages: {
+              ...state.chatMessages,
+              [sessionId]: [...sessionMessages, systemMessage],
+            },
+          };
+        });
+        console.log('[Store] 投票时间已采用:', activityId, newTime);
       },
     }),
     {

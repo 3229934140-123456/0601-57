@@ -106,6 +106,112 @@
   line-height: 1.7;
 }
 
+.progressSection {
+  background: $color-bg-card;
+  margin: $spacing-md $page-padding 0;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.progressSteps {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: $spacing-lg;
+  position: relative;
+}
+
+.progressStep {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.stepDot {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: $color-bg-page;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: $spacing-xs;
+  z-index: 2;
+}
+
+.stepDotActive {
+  background: $color-primary-light;
+}
+
+.stepDotDone {
+  background: $color-primary;
+}
+
+.stepNum {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-tertiary;
+}
+
+.stepCheck {
+  font-size: $font-size-sm;
+  color: $color-text-white;
+  font-weight: $font-weight-bold;
+}
+
+.stepLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  text-align: center;
+}
+
+.stepLabelDone {
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.stepLine {
+  position: absolute;
+  top: 28rpx;
+  left: 50%;
+  right: -50%;
+  height: 4rpx;
+  background: $color-border;
+  z-index: 1;
+}
+
+.stepLineDone {
+  background: $color-primary;
+}
+
+.myStatusCard {
+  display: flex;
+  justify-content: space-around;
+  padding: $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+}
+
+.myStatusItem {
+  text-align: center;
+}
+
+.myStatusLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-bottom: 8rpx;
+  display: block;
+}
+
+.myStatusValue {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
 .participantsSection {
   background: $color-bg-card;
   margin: $spacing-md $page-padding 0;
@@ -162,6 +268,27 @@
   @include text-ellipsis;
   width: 100%;
   text-align: center;
+}
+
+.meBadge {
+  position: absolute;
+  bottom: 4rpx;
+  right: -4rpx;
+  min-width: 32rpx;
+  height: 32rpx;
+  padding: 0 6rpx;
+  background: $color-primary;
+  border-radius: $radius-round;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx solid $color-bg-card;
+}
+
+.meBadgeText {
+  font-size: 20rpx;
+  color: $color-text-white;
+  font-weight: $font-weight-bold;
 }
 
 .aaSection {

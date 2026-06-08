@@ -115,7 +115,7 @@ const SignupPage: React.FC = () => {
       content: '确认到达活动地点并签到？',
       success: (res) => {
         if (res.confirm) {
-          checkIn(activity.id);
+          checkIn(activity.id, currentUser.id);
           Taro.showToast({ title: '签到成功', icon: 'success' });
           Taro.vibrateShort({ type: 'medium' });
         }
@@ -183,6 +183,28 @@ const SignupPage: React.FC = () => {
 
   const getWaitlistCount = () => {
     return activity.waitlistCount || 0;
+  };
+
+  const getMyWaitlistRank = () => {
+    if (!isWaitlist) return 0;
+    const myIndex = waitlistActivities.indexOf(activityId);
+    return myIndex >= 0 ? myIndex + 1 : getWaitlistCount();
+  };
+
+  const getCheckInTime = () => {
+    if (!activity.checkInTimes || !activity.checkInTimes[currentUser.id]) return null;
+    return activity.checkInTimes[currentUser.id];
+  };
+
+  const getProgressSteps = () => {
+    const steps = [
+      { key: 'signup', label: '报名', done: isJoined, active: isJoined },
+      { key: 'checkin', label: '签到', done: isCheckedIn, active: isOngoing && isJoined },
+    ];
+    if (activity.feeType === 'aa' && isJoined) {
+      steps.push({ key: 'aa', label: 'AA付款', done: false, active: false });
+    }
+    return steps;
   };
 
   return (
@@ -302,6 +324,91 @@ const SignupPage: React.FC = () => {
         <Text className={styles.description}>{activity.description}</Text>
       </View>
 
+      <View className={styles.progressSection}>
+        <Text className={styles.sectionTitle}>约局进度</Text>
+        <View className={styles.progressSteps}>
+          {getProgressSteps().map((step, idx, arr) => (
+            <View key={step.key} className={styles.progressStep}>
+              <View
+                className={classNames(
+                  styles.stepDot,
+                  step.done && styles.stepDotDone,
+                  step.active && !step.done && styles.stepDotActive
+                )}
+              >
+                {step.done ? (
+                  <Text className={styles.stepCheck}>✓</Text>
+                ) : (
+                  <Text className={styles.stepNum}>{idx + 1}</Text>
+                )}
+              </View>
+              <Text
+                className={classNames(
+                  styles.stepLabel,
+                  step.done && styles.stepLabelDone
+                )}
+              >
+                {step.label}
+              </Text>
+              {idx < arr.length - 1 && (
+                <View
+                  className={classNames(
+                    styles.stepLine,
+                    step.done && styles.stepLineDone
+                  )}
+                />
+              )}
+            </View>
+          ))}
+        </View>
+
+        {isJoined && (
+          <View className={styles.myStatusCard}>
+            <View className={styles.myStatusItem}>
+              <Text className={styles.myStatusLabel}>报名状态</Text>
+              <Text className={styles.myStatusValue}>已报名</Text>
+            </View>
+            {isCheckedIn && getCheckInTime() && (
+              <View className={styles.myStatusItem}>
+                <Text className={styles.myStatusLabel}>签到时间</Text>
+                <Text className={styles.myStatusValue}>
+                  {dayjs(getCheckInTime()).format('MM-DD HH:mm')}
+                </Text>
+              </View>
+            )}
+            {!isCheckedIn && isOngoing && (
+              <View className={styles.myStatusItem}>
+                <Text className={styles.myStatusLabel}>签到状态</Text>
+                <Text className={styles.myStatusValue}>可签到</Text>
+              </View>
+            )}
+            {!isCheckedIn && !isOngoing && (
+              <View className={styles.myStatusItem}>
+                <Text className={styles.myStatusLabel}>签到状态</Text>
+                <Text className={styles.myStatusValue}>未开始</Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {isWaitlist && (
+          <View className={styles.myStatusCard}>
+            <View className={styles.myStatusItem}>
+              <Text className={styles.myStatusLabel}>候补状态</Text>
+              <Text className={styles.myStatusValue}>候补中</Text>
+            </View>
+            <View className={styles.myStatusItem}>
+              <Text className={styles.myStatusLabel}>我的排位</Text>
+              <Text className={styles.myStatusValue}>第 {getMyWaitlistRank()} 位</Text>
+            </View>
+            <View className={styles.myStatusItem}>
+              <Text className={styles.myStatusLabel}>候补人数</Text>
+              <Text className={styles.myStatusValue}>{getWaitlistCount()} 人</Text>
+            </View>
+          </View>
+        )}
+      </View>
+
       <View className={styles.participantsSection}>
         <View className={styles.participantsHeader}>
           <Text className={styles.sectionTitle}>参与成员</Text>
@@ -310,16 +417,28 @@ const SignupPage: React.FC = () => {
           </View>
         </View>
         <View className={styles.participantList}>
-          {activity.participants?.slice(0, 8).map(user => (
-            <View key={user.id} className={styles.participantItem}>
-              <Image
-                className={styles.participantAvatar}
-                src={user.avatar}
-                mode="aspectFill"
-              />
-              <Text className={styles.participantName}>{user.nickname.slice(0, 4)}</Text>
-            </View>
-          ))}
+          {activity.participants?.slice(0, 8).map(user => {
+            const isMe = user.id === currentUser.id;
+            return (
+              <View key={user.id} className={styles.participantItem}>
+                <View style={{ position: 'relative' }}>
+                  <Image
+                    className={styles.participantAvatar}
+                    src={user.avatar}
+                    mode="aspectFill"
+                  />
+                  {isMe && (
+                    <View className={styles.meBadge}>
+                      <Text className={styles.meBadgeText}>我</Text>
+                    </View>
+                  )}
+                </View>
+                <Text className={styles.participantName}>
+                  {isMe ? '我' : user.nickname.slice(0, 4)}
+                </Text>
+              </View>
+            );
+          })}
           {activity.currentParticipants > 8 && (
             <View className={styles.participantItem}>
               <View

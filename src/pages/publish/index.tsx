@@ -4,7 +4,7 @@ import Taro from '@tarojs/taro';
 import classNames from 'classnames';
 import styles from './index.module.scss';
 import { sportTypeConfigs, skillLevelConfigs } from '@/data/mockData';
-import type { SportType, SkillLevel, Activity } from '@/types';
+import type { SportType, SkillLevel, Activity, RoutePoint } from '@/types';
 import { useAppStore } from '@/store/useAppStore';
 
 type FeeType = 'aa' | 'free' | 'sponsor';
@@ -30,6 +30,10 @@ const PublishPage: React.FC = () => {
   const [hasRoute, setHasRoute] = useState(false);
   const [routeDistance, setRouteDistance] = useState('');
   const [routeDuration, setRouteDuration] = useState('');
+  const [routeStartPoint, setRouteStartPoint] = useState('');
+  const [routeEndPoint, setRouteEndPoint] = useState('');
+  const [routeWaypoints, setRouteWaypoints] = useState<string[]>([]);
+  const [newWaypoint, setNewWaypoint] = useState('');
 
   const canPublish = sportType && skillLevel && title && locationName && startDate && startTime && endTime;
 
@@ -65,6 +69,54 @@ const PublishPage: React.FC = () => {
     setMaxParticipants(prev => Math.max(2, Math.min(100, prev + delta)));
   };
 
+  const buildRoutePoints = (): RoutePoint[] => {
+    const points: RoutePoint[] = [];
+    let order = 0;
+
+    if (routeStartPoint) {
+      points.push({
+        id: `sp_${Date.now()}`,
+        name: routeStartPoint,
+        type: 'start',
+        order: order++,
+      });
+    }
+
+    routeWaypoints.forEach((wp, idx) => {
+      points.push({
+        id: `wp_${Date.now()}_${idx}`,
+        name: wp,
+        type: 'waypoint',
+        order: order++,
+      });
+    });
+
+    if (routeEndPoint) {
+      points.push({
+        id: `ep_${Date.now()}`,
+        name: routeEndPoint,
+        type: 'end',
+        order: order++,
+      });
+    }
+
+    return points;
+  };
+
+  const handleAddWaypoint = () => {
+    if (!newWaypoint.trim()) return;
+    if (routeWaypoints.length >= 8) {
+      Taro.showToast({ title: '最多添加8个途经点', icon: 'none' });
+      return;
+    }
+    setRouteWaypoints([...routeWaypoints, newWaypoint.trim()]);
+    setNewWaypoint('');
+  };
+
+  const handleRemoveWaypoint = (index: number) => {
+    setRouteWaypoints(routeWaypoints.filter((_, i) => i !== index));
+  };
+
   const handlePublish = () => {
     if (!canPublish) {
       Taro.showToast({ title: '请填写完整信息', icon: 'none' });
@@ -98,6 +150,8 @@ const PublishPage: React.FC = () => {
       routeInfo: hasRoute && routeDistance ? {
         distance: Number(routeDistance),
         duration: routeDuration || '待定',
+        waypoints: routeWaypoints,
+        points: buildRoutePoints(),
       } : undefined,
       weather: {
         temperature: 25 + Math.floor(Math.random() * 8),
@@ -136,6 +190,10 @@ const PublishPage: React.FC = () => {
         setHasRoute(false);
         setRouteDistance('');
         setRouteDuration('');
+        setRouteStartPoint('');
+        setRouteEndPoint('');
+        setRouteWaypoints([]);
+        setNewWaypoint('');
         Taro.switchTab({ url: '/pages/recommend/index' });
       }, 1500);
     }, 800);
@@ -296,6 +354,65 @@ const PublishPage: React.FC = () => {
 
           {hasRoute && (
             <>
+              <View className={styles.formItem}>
+                <Text className={styles.formLabel}>起点</Text>
+                <View className={styles.inputBox}>
+                  <Input
+                    className={styles.input}
+                    placeholder="例如：朝阳公园东门"
+                    value={routeStartPoint}
+                    onInput={(e) => setRouteStartPoint(e.detail.value)}
+                  />
+                  <Text className={styles.inputSuffix}>🚩</Text>
+                </View>
+              </View>
+
+              <View className={styles.formItem}>
+                <Text className={styles.formLabel}>终点</Text>
+                <View className={styles.inputBox}>
+                  <Input
+                    className={styles.input}
+                    placeholder="例如：奥森公园南门"
+                    value={routeEndPoint}
+                    onInput={(e) => setRouteEndPoint(e.detail.value)}
+                  />
+                  <Text className={styles.inputSuffix}>🏁</Text>
+                </View>
+              </View>
+
+              <View className={styles.formItem}>
+                <Text className={styles.formLabel}>途经点（可选）</Text>
+                <View className={styles.waypointList}>
+                  {routeWaypoints.map((wp, idx) => (
+                    <View key={idx} className={styles.waypointItem}>
+                      <Text className={styles.waypointDot}>📍</Text>
+                      <Text className={styles.waypointName}>{wp}</Text>
+                      <View
+                        className={styles.waypointRemove}
+                        onClick={() => handleRemoveWaypoint(idx)}
+                      >
+                        <Text>×</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+                {routeWaypoints.length < 8 && (
+                  <View className={styles.addWaypointBox}>
+                    <Input
+                      className={styles.addWaypointInput}
+                      placeholder="添加途经点"
+                      value={newWaypoint}
+                      onInput={(e) => setNewWaypoint(e.detail.value)}
+                      confirmType="done"
+                      onConfirm={handleAddWaypoint}
+                    />
+                    <View className={styles.addWaypointBtn} onClick={handleAddWaypoint}>
+                      <Text>+</Text>
+                    </View>
+                  </View>
+                )}
+              </View>
+
               <View className={styles.formItem}>
                 <Text className={styles.formLabel}>路线距离（公里）</Text>
                 <View className={styles.inputBox}>

@@ -257,6 +257,71 @@
   text-align: center;
 }
 
+.waypointList {
+  margin-bottom: $spacing-sm;
+}
+
+.waypointItem {
+  display: flex;
+  align-items: center;
+  padding: $spacing-sm $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-xs;
+}
+
+.waypointDot {
+  font-size: 24rpx;
+  margin-right: $spacing-sm;
+}
+
+.waypointName {
+  flex: 1;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+}
+
+.waypointRemove {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  background: $color-border;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  color: $color-text-tertiary;
+}
+
+.addWaypointBox {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.addWaypointInput {
+  flex: 1;
+  height: 72rpx;
+  padding: 0 $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+}
+
+.addWaypointBtn {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-md;
+  background: $color-primary;
+  color: $color-text-white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  font-weight: $font-weight-bold;
+}
+
 .footer {
   position: fixed;
   bottom: 0;

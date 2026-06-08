@@ -539,6 +539,38 @@
   margin-top: $spacing-sm;
 }
 
+.voteAdoptSection {
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-divider;
+}
+
+.voteAdoptTip {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-bottom: $spacing-sm;
+  display: block;
+}
+
+.voteAdoptBtns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+}
+
+.voteAdoptBtn {
+  padding: $spacing-xs $spacing-sm;
+  background: rgba($color-primary, 0.1);
+  border-radius: $radius-sm;
+  border: 1rpx solid $color-primary;
+}
+
+.voteAdoptBtnText {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
 /* 输入栏 */
 .chatInputBar {
   display: flex;

@@ -215,6 +215,40 @@ const MapPage: React.FC = () => {
             </View>
           )}
 
+          {hasRoute && selectedActivity.routeInfo?.points && selectedActivity.routeInfo.points.length > 0 && (
+            <View className={styles.routePointsSection}>
+              <Text className={styles.routePointsTitle}>路线点位</Text>
+              <View className={styles.routePointsList}>
+                {selectedActivity.routeInfo.points.map((point, idx) => {
+                  let waypointNum = 0;
+                  if (point.type === 'waypoint') {
+                    waypointNum = selectedActivity.routeInfo!.points!.filter(
+                      (p, i) => p.type === 'waypoint' && i <= idx
+                    ).length;
+                  }
+                  return (
+                    <View key={point.id} className={styles.routePointItem}>
+                      <View className={styles.routePointDot}>
+                        <Text className={styles.routePointIcon}>
+                          {point.type === 'start' ? '🚩' : point.type === 'end' ? '🏁' : '📍'}
+                        </Text>
+                      </View>
+                      <View className={styles.routePointInfo}>
+                        <Text className={styles.routePointName}>{point.name}</Text>
+                        <Text className={styles.routePointType}>
+                          {point.type === 'start' ? '起点' : point.type === 'end' ? '终点' : `途经点 ${waypointNum}`}
+                        </Text>
+                      </View>
+                      {idx < selectedActivity.routeInfo!.points!.length - 1 && (
+                        <View className={styles.routePointLine} />
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
           <View className={styles.locationRow}>
             <Text className={styles.locationIconText}>📍</Text>
             <View style={{ flex: 1 }}>

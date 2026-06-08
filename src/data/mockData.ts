@@ -120,6 +120,13 @@ export const mockActivities: Activity[] = [
     routeInfo: {
       distance: 8,
       duration: '约1小时',
+      waypoints: ['仰山', '奥海'],
+      points: [
+        { id: 'rp1', name: '奥森南园南门', type: 'start', order: 0 },
+        { id: 'rp2', name: '仰山', type: 'waypoint', order: 1 },
+        { id: 'rp3', name: '奥海', type: 'waypoint', order: 2 },
+        { id: 'rp4', name: '奥森南园南门', type: 'end', order: 3 },
+      ],
     },
     weather: {
       temperature: 22,

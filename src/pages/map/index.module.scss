@@ -315,6 +315,81 @@
   color: $color-text-tertiary;
 }
 
+.routePointsSection {
+  margin-top: $spacing-md;
+  margin-bottom: $spacing-md;
+  padding: $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+}
+
+.routePointsTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.routePointsList {
+  position: relative;
+}
+
+.routePointItem {
+  display: flex;
+  align-items: flex-start;
+  position: relative;
+  padding-bottom: $spacing-md;
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
+.routePointDot {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: $color-bg-card;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: $spacing-sm;
+  flex-shrink: 0;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+  z-index: 2;
+}
+
+.routePointIcon {
+  font-size: 24rpx;
+}
+
+.routePointInfo {
+  flex: 1;
+  padding-top: 6rpx;
+}
+
+.routePointName {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  margin-bottom: 4rpx;
+}
+
+.routePointType {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.routePointLine {
+  position: absolute;
+  left: 23rpx;
+  top: 48rpx;
+  bottom: 0;
+  width: 2rpx;
+  background: $color-border;
+  z-index: 1;
+}
+
 .locationRow {
   display: flex;
   align-items: center;

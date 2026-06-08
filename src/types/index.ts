@@ -20,6 +20,16 @@ export interface User {
   location?: string;
 }
 
+// 路线点位
+export interface RoutePoint {
+  id: string;
+  name: string;
+  type: 'start' | 'waypoint' | 'end';
+  latitude?: number;
+  longitude?: number;
+  order: number;
+}
+
 // 活动信息
 export interface Activity {
   id: string;
@@ -47,6 +57,7 @@ export interface Activity {
     distance: number;
     duration: string;
     waypoints?: string[];
+    points?: RoutePoint[];
   };
   weather?: {
     temperature: number;
@@ -55,6 +66,7 @@ export interface Activity {
   };
   participants?: User[];
   waitlist?: User[];
+  checkInTimes?: Record<string, string>;
   createdAt: string;
 }
 

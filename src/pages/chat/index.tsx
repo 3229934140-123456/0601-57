@@ -13,8 +13,10 @@ type TabType = 'activity' | 'private';
 const ChatPage: React.FC = () => {
   const currentUser = useAppStore(state => state.currentUser);
   const chatMessages = useAppStore(state => state.chatMessages);
+  const activities = useAppStore(state => state.activities);
   const addChatMessage = useAppStore(state => state.addChatMessage);
   const vote = useAppStore(state => state.vote);
+  const adoptVoteTime = useAppStore(state => state.adoptVoteTime);
 
   const [activeTab, setActiveTab] = useState<TabType>('activity');
   const [selectedSession, setSelectedSession] = useState<ChatSession | null>(null);
@@ -64,6 +66,48 @@ const ChatPage: React.FC = () => {
     if (!selectedSession) return;
     vote(selectedSession.id, messageId, optionIndex, currentUser.id);
     Taro.vibrateShort({ type: 'light' });
+  };
+
+  const isOrganizer = () => {
+    if (!selectedSession?.activityId) return false;
+    const activity = activities.find(a => a.id === selectedSession.activityId);
+    return activity?.organizer.id === currentUser.id;
+  };
+
+  const handleAdoptVote = (messageId: string, optionIndex: number, optionText: string) => {
+    if (!selectedSession?.activityId) return;
+
+    Taro.showModal({
+      title: '采用投票结果',
+      content: `确定采用「${optionText}」作为新的活动时间吗？`,
+      success: (res) => {
+        if (res.confirm) {
+          const timeMatch = optionText.match(/(\d{1,2}):(\d{2})|(\d{1,2})点|上午(\d+)|下午(\d+)/);
+          let newTime = '09:00';
+          if (timeMatch) {
+            if (timeMatch[1] && timeMatch[2]) {
+              newTime = `${timeMatch[1]}:${timeMatch[2]}`;
+            } else if (timeMatch[3]) {
+              newTime = `${timeMatch[3].padStart(2, '0')}:00`;
+            } else if (timeMatch[4]) {
+              newTime = `${timeMatch[4].padStart(2, '0')}:00`;
+            } else if (timeMatch[5]) {
+              newTime = `${Number(timeMatch[5]) + 12}:00`;
+            }
+          }
+
+          adoptVoteTime(
+            selectedSession.activityId!,
+            selectedSession.id,
+            messageId,
+            optionIndex,
+            newTime
+          );
+
+          Taro.showToast({ title: '已采用', icon: 'success' });
+        }
+      },
+    });
   };
 
   const handleLocationShare = () => {
@@ -303,6 +347,23 @@ const ChatPage: React.FC = () => {
                         <Text className={styles.voteTip}>
                           {userVotedIndex >= 0 ? '你已投票，可更改选择' : '点击选项参与投票'}
                         </Text>
+
+                        {isOrganizer() && (
+                          <View className={styles.voteAdoptSection}>
+                            <Text className={styles.voteAdoptTip}>群主可采用投票结果更新活动时间</Text>
+                            <View className={styles.voteAdoptBtns}>
+                              {voteData.options.map((option, idx) => (
+                                <View
+                                  key={idx}
+                                  className={styles.voteAdoptBtn}
+                                  onClick={() => handleAdoptVote(msg.id, idx, option)}
+                                >
+                                  <Text className={styles.voteAdoptBtnText}>采用「{option}」</Text>
+                                </View>
+                              ))}
+                            </View>
+                          </View>
+                        )}
                       </View>
                     )}
                   </View>

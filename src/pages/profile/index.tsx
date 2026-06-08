@@ -46,12 +46,10 @@ const ProfilePage: React.FC = () => {
 
   const handleMyActivities = (type: string) => {
     console.log('[Profile] 我的活动:', type);
-    if (type === 'joined' && joinedActivities.length > 0) {
-      Taro.navigateTo({ url: `/pages/signup/index?id=${joinedActivities[0]}` });
-    } else if (type === 'published' && publishedActivities.length > 0) {
-      Taro.navigateTo({ url: `/pages/signup/index?id=${publishedActivities[0]}` });
+    if (type === 'joined' || type === 'published') {
+      Taro.navigateTo({ url: `/pages/my-activities/index?tab=${type}` });
     } else {
-      Taro.showToast({ title: '暂无活动', icon: 'none' });
+      Taro.showToast({ title: '功能开发中', icon: 'none' });
     }
   };
 

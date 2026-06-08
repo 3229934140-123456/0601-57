@@ -6,7 +6,8 @@ export default defineAppConfig({
     'pages/chat/index',
     'pages/profile/index',
     'pages/credit/index',
-    'pages/signup/index'
+    'pages/signup/index',
+    'pages/my-activities/index'
   ],
   window: {
     backgroundTextStyle: 'light',
